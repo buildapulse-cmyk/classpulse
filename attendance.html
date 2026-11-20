@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="ClassPulse helps teachers record attendance and scores and follow each student's progress over the term.">
+<title>ClassPulse — take attendance</title>
+<link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1E5AA8}a:hover{color:#12305A}
+.att-btn{height:44px;min-width:84px;padding:0 14px;border-radius:10px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;background:#FFFFFF;color:#5B6472;border:1px solid #C9D2DF}
+.att-btn.on-P{background:#157F3B;color:#FFFFFF;border-color:#157F3B}
+.att-btn.on-A{background:#B42318;color:#FFFFFF;border-color:#B42318}
+.att-btn.on-L{background:#F2A300;color:#12305A;border-color:#F2A300}
+</style>
+</head>
+<body>
+<div style="min-height: 100vh; background: #F6F8FB; font-family: Inter, system-ui, sans-serif; color: #12305A">
+<header style="background: #12305A; padding: 0 24px">
+<div style="max-width: 1200px; margin: 0 auto; min-height: 64px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 28px; padding: 10px 0; box-sizing: border-box">
+<a href="index.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none"><img src="images/logo-mark-light.svg" alt="" width="32" height="32"><span style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 20px; color: #FFFFFF">Class<span style="color: #FFC23D">Pulse</span></span></a>
+<nav aria-label="Main" style="display: flex; flex-wrap: wrap; gap: 4px; flex: 1">
+<a href="index.html" style="color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 500; padding: 10px 12px; border-radius: 8px">Dashboard</a>
+<a href="attendance.html" aria-current="page" style="color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 600; padding: 10px 12px; border-radius: 8px; background: rgba(255,255,255,0.12); box-shadow: inset 0 -3px 0 #FFC23D">Attendance</a>
+<a href="record-scores.html" style="color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 500; padding: 10px 12px; border-radius: 8px">Record scores</a>
+<a href="topics.html" style="color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 500; padding: 10px 12px; border-radius: 8px">Topics</a>
+<a href="students.html" style="color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 500; padding: 10px 12px; border-radius: 8px">Students</a>
+<a href="report-card.html" style="color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 500; padding: 10px 12px; border-radius: 8px">Report cards</a></nav>
+<div style="display: flex; align-items: center; gap: 10px; color: #FFFFFF; font-size: 14px"><span style="width: 32px; height: 32px; border-radius: 50%; background: #F2A300; color: #12305A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px">AM</span>Mrs. A. Mensah</div>
+</div>
+</header>
+<main style="max-width: 1200px; margin: 0 auto; padding: 32px 24px 48px; display: flex; flex-direction: column; gap: 24px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 32px">Take attendance</h1>
+<p style="margin: 0; font-size: 15px; color: #5B6472">Everyone starts as present. Tap Absent or Late for anyone who isn't.</p>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end">
+<div style="display: flex; flex-direction: column; gap: 6px; flex: 1 1 200px"><label for="att-class" style="font-size: 14px; font-weight: 600">Class</label><select id="att-class" style="height: 46px; padding: 0 12px; border: 1px solid #C9D2DF; border-radius: 10px; font-size: 15px; font-family: inherit; background: #FFFFFF"><option>JHS 2A</option><option>JHS 2B</option><option>JHS 3A</option></select></div>
+<div style="display: flex; flex-direction: column; gap: 6px; flex: 1 1 200px"><label for="att-date" style="font-size: 14px; font-weight: 600">Date</label><input id="att-date" type="date" value="2026-11-20" style="height: 46px; padding: 0 12px; border: 1px solid #C9D2DF; border-radius: 10px; font-size: 15px; font-family: inherit; background: #FFFFFF; box-sizing: border-box"></div>
+<button type="button" id="all-present" style="height: 46px; padding: 0 18px; border-radius: 10px; background: #FFFFFF; border: 1px solid #C9D2DF; color: #12305A; font-weight: 600; font-size: 14px; font-family: inherit; cursor: pointer">Mark all present</button>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px">
+<div style="background: #E3F4E8; border-radius: 14px; padding: 16px 20px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; color: #115E2C">Present</span><span style="font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 700; color: #115E2C"><span id="count-present">0</span></span></div>
+<div style="background: #FDE8E7; border-radius: 14px; padding: 16px 20px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; color: #8F1D15">Absent</span><span style="font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 700; color: #8F1D15"><span id="count-absent">0</span></span></div>
+<div style="background: #FFF4D6; border-radius: 14px; padding: 16px 20px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; color: #6B4E00">Late</span><span style="font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 700; color: #6B4E00"><span id="count-late">0</span></span></div>
+</div>
+<section style="background: #FFFFFF; border: 1px solid #E2E7EF; border-radius: 16px; padding: 8px 24px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 0; border-bottom: 1px solid #EEF1F6">
+<span style="width: 36px; height: 36px; border-radius: 50%; background: #E6EEFA; color: #1E4C8F; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700">KA</span>
+<div style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">Kwame Asante</span><span style="font-size: 13px; color: #5B6472">Present 18 of 18 days</span></div>
+<div role="group" aria-label="Attendance for Kwame Asante" style="display: flex; gap: 6px"><button type="button" class="att-btn" data-i="0" data-v="P">Present</button><button type="button" class="att-btn" data-i="0" data-v="A">Absent</button><button type="button" class="att-btn" data-i="0" data-v="L">Late</button></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 0; border-bottom: 1px solid #EEF1F6">
+<span style="width: 36px; height: 36px; border-radius: 50%; background: #E6EEFA; color: #1E4C8F; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700">AB</span>
+<div style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">Ama Boateng</span><span style="font-size: 13px; color: #5B6472">Present 18 of 18 days</span></div>
+<div role="group" aria-label="Attendance for Ama Boateng" style="display: flex; gap: 6px"><button type="button" class="att-btn" data-i="1" data-v="P">Present</button><button type="button" class="att-btn" data-i="1" data-v="A">Absent</button><button type="button" class="att-btn" data-i="1" data-v="L">Late</button></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 0; border-bottom: 1px solid #EEF1F6">
+<span style="width: 36px; height: 36px; border-radius: 50%; background: #E6EEFA; color: #1E4C8F; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700">KM</span>
+<div style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">Kofi Mensah</span><span style="font-size: 13px; color: #5B6472">Present 17 of 18 days</span></div>
+<div role="group" aria-label="Attendance for Kofi Mensah" style="display: flex; gap: 6px"><button type="button" class="att-btn" data-i="2" data-v="P">Present</button><button type="button" class="att-btn" data-i="2" data-v="A">Absent</button><button type="button" class="att-btn" data-i="2" data-v="L">Late</button></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 0; border-bottom: 1px solid #EEF1F6">
+<span style="width: 36px; height: 36px; border-radius: 50%; background: #E6EEFA; color: #1E4C8F; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700">AO</span>
+<div style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">Akosua Owusu</span><span style="font-size: 13px; color: #5B6472">Present 18 of 18 days</span></div>
+<div role="group" aria-label="Attendance for Akosua Owusu" style="display: flex; gap: 6px"><button type="button" class="att-btn" data-i="3" data-v="P">Present</button><button type="button" class="att-btn" data-i="3" data-v="A">Absent</button><button type="button" class="att-btn" data-i="3" data-v="L">Late</button></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 0; border-bottom: 1px solid #EEF1F6">
+<span style="width: 36px; height: 36px; border-radius: 50%; background: #E6EEFA; color: #1E4C8F; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700">YD</span>
+<div style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">Yaw Darko</span><span style="font-size: 13px; color: #5B6472">Present 15 of 18 days</span></div>
+<div role="group" aria-label="Attendance for Yaw Darko" style="display: flex; gap: 6px"><button type="button" class="att-btn" data-i="4" data-v="P">Present</button><button type="button" class="att-btn" data-i="4" data-v="A">Absent</button><button type="button" class="att-btn" data-i="4" data-v="L">Late</button></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 0; border-bottom: 1px solid #EEF1F6">
+<span style="width: 36px; height: 36px; border-radius: 50%; background: #E6EEFA; color: #1E4C8F; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700">EQ</span>
+<div style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">Efua Quaye</span><span style="font-size: 13px; color: #5B6472">Present 18 of 18 days</span></div>
+<div role="group" aria-label="Attendance for Efua Quaye" style="display: flex; gap: 6px"><button type="button" class="att-btn" data-i="5" data-v="P">Present</button><button type="button" class="att-btn" data-i="5" data-v="A">Absent</button><button type="button" class="att-btn" data-i="5" data-v="L">Late</button></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 0; border-bottom: 1px solid #EEF1F6">
+<span style="width: 36px; height: 36px; border-radius: 50%; background: #E6EEFA; color: #1E4C8F; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700">KA</span>
+<div style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">Kojo Addo</span><span style="font-size: 13px; color: #5B6472">Late 3 times this month</span></div>
+<div role="group" aria-label="Attendance for Kojo Addo" style="display: flex; gap: 6px"><button type="button" class="att-btn" data-i="6" data-v="P">Present</button><button type="button" class="att-btn" data-i="6" data-v="A">Absent</button><button type="button" class="att-btn" data-i="6" data-v="L">Late</button></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 0; border-bottom: 1px solid #EEF1F6">
+<span style="width: 36px; height: 36px; border-radius: 50%; background: #E6EEFA; color: #1E4C8F; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700">AS</span>
+<div style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">Abena Sarpong</span><span style="font-size: 13px; color: #5B6472">Present 17 of 18 days</span></div>
+<div role="group" aria-label="Attendance for Abena Sarpong" style="display: flex; gap: 6px"><button type="button" class="att-btn" data-i="7" data-v="P">Present</button><button type="button" class="att-btn" data-i="7" data-v="A">Absent</button><button type="button" class="att-btn" data-i="7" data-v="L">Late</button></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 0; border-bottom: 1px solid #EEF1F6">
+<span style="width: 36px; height: 36px; border-radius: 50%; background: #E6EEFA; color: #1E4C8F; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700">NO</span>
+<div style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">Nana Ofori</span><span style="font-size: 13px; color: #5B6472">Present 18 of 18 days</span></div>
+<div role="group" aria-label="Attendance for Nana Ofori" style="display: flex; gap: 6px"><button type="button" class="att-btn" data-i="8" data-v="P">Present</button><button type="button" class="att-btn" data-i="8" data-v="A">Absent</button><button type="button" class="att-btn" data-i="8" data-v="L">Late</button></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 0; border-bottom: 1px solid #EEF1F6">
+<span style="width: 36px; height: 36px; border-radius: 50%; background: #E6EEFA; color: #1E4C8F; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700">EA</span>
+<div style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">Esi Appiah</span><span style="font-size: 13px; color: #5B6472">Absent 4 times this month</span></div>
+<div role="group" aria-label="Attendance for Esi Appiah" style="display: flex; gap: 6px"><button type="button" class="att-btn" data-i="9" data-v="P">Present</button><button type="button" class="att-btn" data-i="9" data-v="A">Absent</button><button type="button" class="att-btn" data-i="9" data-v="L">Late</button></div>
+</div>
+
+</section>
+<div style="display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px">
+<a href="index.html" style="height: 48px; padding: 0 24px; border-radius: 10px; background: #F2A300; color: #12305A; font-weight: 700; font-size: 15px; text-decoration: none; display: flex; align-items: center">Save attendance</a>
+</div>
+</main>
+</div>
+<script>
+const marks = {4: 'A', 9: 'A', 6: 'L'};
+function draw() {
+  const counts = { P: 0, A: 0, L: 0 };
+  for (let i = 0; i < 10; i++) counts[marks[i] || 'P']++;
+  document.querySelectorAll('.att-btn').forEach((b) => {
+    const on = (marks[b.dataset.i] || 'P') === b.dataset.v;
+    b.className = 'att-btn' + (on ? ' on-' + b.dataset.v : '');
+    b.setAttribute('aria-pressed', on);
+  });
+  document.getElementById('count-present').textContent = counts.P;
+  document.getElementById('count-absent').textContent = counts.A;
+  document.getElementById('count-late').textContent = counts.L;
+}
+document.querySelectorAll('.att-btn').forEach((b) => b.addEventListener('click', () => { marks[b.dataset.i] = b.dataset.v; draw(); }));
+document.getElementById('all-present').addEventListener('click', () => { for (const k in marks) delete marks[k]; draw(); });
+draw();
+</script>
+</body>
+</html>
