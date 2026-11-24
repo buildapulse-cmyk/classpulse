@@ -22,21 +22,21 @@ a{color:#1E5AA8}a:hover{color:#12305A}
 <div style="min-height: 100vh; background: #F6F8FB; font-family: Inter, system-ui, sans-serif; color: #12305A">
 <header style="background: #12305A; padding: 0 24px">
 <div style="max-width: 1200px; margin: 0 auto; min-height: 64px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 28px; padding: 10px 0; box-sizing: border-box">
-<a href="index.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none"><img src="images/logo-mark-light.svg" alt="" width="32" height="32"><span style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 20px; color: #FFFFFF">Class<span style="color: #FFC23D">Pulse</span></span></a>
+<a href="dashboard.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none"><img src="images/logo-mark-light.svg" alt="" width="32" height="32"><span style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 20px; color: #FFFFFF">Class<span style="color: #FFC23D">Pulse</span></span></a>
 <nav aria-label="Main" style="display: flex; flex-wrap: wrap; gap: 4px; flex: 1">
-<a href="index.html" style="color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 500; padding: 10px 12px; border-radius: 8px">Dashboard</a>
+<a href="dashboard.html" style="color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 500; padding: 10px 12px; border-radius: 8px">Dashboard</a>
 <a href="attendance.html" style="color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 500; padding: 10px 12px; border-radius: 8px">Attendance</a>
 <a href="record-scores.html" aria-current="page" style="color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 600; padding: 10px 12px; border-radius: 8px; background: rgba(255,255,255,0.12); box-shadow: inset 0 -3px 0 #FFC23D">Record scores</a>
 <a href="topics.html" style="color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 500; padding: 10px 12px; border-radius: 8px">Topics</a>
 <a href="students.html" style="color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 500; padding: 10px 12px; border-radius: 8px">Students</a>
-<a href="report-card.html" style="color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 500; padding: 10px 12px; border-radius: 8px">Report cards</a></nav>
-<div style="display: flex; align-items: center; gap: 10px; color: #FFFFFF; font-size: 14px"><span style="width: 32px; height: 32px; border-radius: 50%; background: #F2A300; color: #12305A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px">AM</span>Mrs. A. Mensah</div>
+<a href="class-lists.html" style="color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 500; padding: 10px 12px; border-radius: 8px">Class lists</a></nav>
+<div id="user-box" style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; color: #FFFFFF; font-size: 14px"></div>
 </div>
 </header>
 <main style="max-width: 1200px; margin: 0 auto; padding: 32px 24px 48px; display: flex; flex-direction: column; gap: 24px">
 <div style="display: flex; flex-direction: column; gap: 4px">
 <h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 32px">Record scores</h1>
-<p style="margin: 0; font-size: 15px; color: #5B6472">Pick the type of assessment and the topic it covers, then enter each student's score.</p>
+<p style="margin: 0; font-size: 15px; color: #5B6472">Pick the type of assessment and the topic it covers, then enter each student's score. Leave a box empty if the student didn't take it.</p>
 </div>
 <section style="background: #FFFFFF; border: 1px solid #E2E7EF; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 20px">
 <div style="display: flex; flex-direction: column; gap: 10px">
@@ -50,43 +50,20 @@ a{color:#1E5AA8}a:hover{color:#12305A}
 </div>
 </div>
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px">
-<div style="display: flex; flex-direction: column; gap: 6px"><label for="rs-class" style="font-size: 14px; font-weight: 600">Class</label><select id="rs-class" style="height: 46px; padding: 0 12px; border: 1px solid #C9D2DF; border-radius: 10px; font-size: 15px; font-family: inherit; background: #FFFFFF"><option>JHS 2A</option><option>JHS 2B</option><option>JHS 3A</option></select></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><label for="rs-class" style="font-size: 14px; font-weight: 600">Class</label><select id="rs-class" style="height: 46px; padding: 0 12px; border: 1px solid #C9D2DF; border-radius: 10px; font-size: 15px; font-family: inherit; background: #FFFFFF"><option value="">Loading classes…</option></select></div>
 <div style="display: flex; flex-direction: column; gap: 6px"><label for="rs-subject" style="font-size: 14px; font-weight: 600">Subject</label><select id="rs-subject" style="height: 46px; padding: 0 12px; border: 1px solid #C9D2DF; border-radius: 10px; font-size: 15px; font-family: inherit; background: #FFFFFF"><option>Mathematics</option><option>Integrated Science</option><option>English Language</option></select></div>
-<div style="display: flex; flex-direction: column; gap: 6px"><label for="rs-topic" style="font-size: 14px; font-weight: 600">Topic</label><select id="rs-topic" style="height: 46px; padding: 0 12px; border: 1px solid #C9D2DF; border-radius: 10px; font-size: 15px; font-family: inherit; background: #FFFFFF"><option>Ratio &amp; Proportion (in progress)</option><option>Fractions (completed)</option><option>Decimals (completed)</option></select></div>
-<div style="display: flex; flex-direction: column; gap: 6px"><label for="rs-max" style="font-size: 14px; font-weight: 600">Marked out of</label><input id="rs-max" type="number" value="10" style="height: 46px; padding: 0 12px; border: 1px solid #C9D2DF; border-radius: 10px; font-size: 15px; font-family: inherit; box-sizing: border-box"></div>
-<div style="display: flex; flex-direction: column; gap: 6px"><label for="rs-date" style="font-size: 14px; font-weight: 600">Date</label><input id="rs-date" type="date" value="2026-11-20" style="height: 46px; padding: 0 12px; border: 1px solid #C9D2DF; border-radius: 10px; font-size: 15px; font-family: inherit; box-sizing: border-box"></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><label for="rs-topic" style="font-size: 14px; font-weight: 600">Topic</label><select id="rs-topic" style="height: 46px; padding: 0 12px; border: 1px solid #C9D2DF; border-radius: 10px; font-size: 15px; font-family: inherit; background: #FFFFFF"><option value="">Loading topics…</option></select></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><label for="rs-max" style="font-size: 14px; font-weight: 600">Marked out of</label><input id="rs-max" type="number" min="1" value="10" style="height: 46px; padding: 0 12px; border: 1px solid #C9D2DF; border-radius: 10px; font-size: 15px; font-family: inherit; box-sizing: border-box"></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><label for="rs-date" style="font-size: 14px; font-weight: 600">Date</label><input id="rs-date" type="date" style="height: 46px; padding: 0 12px; border: 1px solid #C9D2DF; border-radius: 10px; font-size: 15px; font-family: inherit; box-sizing: border-box"></div>
 </div>
 </section>
 <div style="display: flex; flex-wrap: wrap; gap: 24px">
 <section style="flex: 999 1 560px; min-width: 0; background: #FFFFFF; border: 1px solid #E2E7EF; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 8px">
-<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px"><h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 20px">Scores · JHS 2A</h2><span style="font-size: 14px; color: #5B6472"><span class="type-name">Class exercise</span> · out of <span class="max-out">10</span></span></div>
-<div style="display: flex; align-items: center; gap: 16px; padding: 10px 0; border-bottom: 1px solid #EEF1F6">
-<label for="score-0" style="flex: 1; font-weight: 500">Kwame Asante</label>
-<input id="score-0" class="score-input" data-ratio="0.8" type="number" min="0" style="width: 96px; height: 44px; padding: 0 12px; border: 1px solid #C9D2DF; border-radius: 10px; font-size: 15px; font-family: inherit; text-align: right; box-sizing: border-box">
-</div>
-<div style="display: flex; align-items: center; gap: 16px; padding: 10px 0; border-bottom: 1px solid #EEF1F6">
-<label for="score-1" style="flex: 1; font-weight: 500">Ama Boateng</label>
-<input id="score-1" class="score-input" data-ratio="0.9" type="number" min="0" style="width: 96px; height: 44px; padding: 0 12px; border: 1px solid #C9D2DF; border-radius: 10px; font-size: 15px; font-family: inherit; text-align: right; box-sizing: border-box">
-</div>
-<div style="display: flex; align-items: center; gap: 16px; padding: 10px 0; border-bottom: 1px solid #EEF1F6">
-<label for="score-2" style="flex: 1; font-weight: 500">Kofi Mensah</label>
-<input id="score-2" class="score-input" data-ratio="0.6" type="number" min="0" style="width: 96px; height: 44px; padding: 0 12px; border: 1px solid #C9D2DF; border-radius: 10px; font-size: 15px; font-family: inherit; text-align: right; box-sizing: border-box">
-</div>
-<div style="display: flex; align-items: center; gap: 16px; padding: 10px 0; border-bottom: 1px solid #EEF1F6">
-<label for="score-3" style="flex: 1; font-weight: 500">Akosua Owusu</label>
-<input id="score-3" class="score-input" data-ratio="0.7" type="number" min="0" style="width: 96px; height: 44px; padding: 0 12px; border: 1px solid #C9D2DF; border-radius: 10px; font-size: 15px; font-family: inherit; text-align: right; box-sizing: border-box">
-</div>
-<div style="display: flex; align-items: center; gap: 16px; padding: 10px 0; border-bottom: 1px solid #EEF1F6">
-<label for="score-4" style="flex: 1; font-weight: 500">Yaw Darko</label>
-<input id="score-4" class="score-input" data-ratio="0.4" type="number" min="0" style="width: 96px; height: 44px; padding: 0 12px; border: 1px solid #C9D2DF; border-radius: 10px; font-size: 15px; font-family: inherit; text-align: right; box-sizing: border-box">
-</div>
-<div style="display: flex; align-items: center; gap: 16px; padding: 10px 0; border-bottom: 1px solid #EEF1F6">
-<label for="score-5" style="flex: 1; font-weight: 500">Efua Quaye</label>
-<input id="score-5" class="score-input" data-ratio="0.5" type="number" min="0" style="width: 96px; height: 44px; padding: 0 12px; border: 1px solid #C9D2DF; border-radius: 10px; font-size: 15px; font-family: inherit; text-align: right; box-sizing: border-box">
-</div>
-
-<div style="display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; padding-top: 12px">
-<a href="index.html" style="height: 48px; padding: 0 24px; border-radius: 10px; background: #F2A300; color: #12305A; font-weight: 700; font-size: 15px; text-decoration: none; display: flex; align-items: center">Save scores</a>
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px"><h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 20px">Scores · <span id="class-name">JHS 2A</span></h2><span style="font-size: 14px; color: #5B6472"><span class="type-name">Class exercise</span> · out of <span class="max-out">10</span></span></div>
+<div id="score-list" aria-live="polite"><p style="color: #5B6472">Loading students…</p></div>
+<div style="display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 16px; padding-top: 12px">
+<p id="save-status" role="status" style="margin: 0; font-weight: 600"></p>
+<button type="button" id="save-btn" style="height: 48px; padding: 0 24px; border-radius: 10px; background: #F2A300; color: #12305A; font-weight: 700; font-size: 15px; text-decoration: none; display: flex; align-items: center; border: none; font-family: inherit; cursor: pointer">Save scores</button>
 </div>
 </section>
 <section style="flex: 1 1 300px; display: flex; flex-direction: column; gap: 16px">
@@ -99,24 +76,12 @@ a{color:#1E5AA8}a:hover{color:#12305A}
 </div>
 <div style="background: #E6EEFA; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 8px">
 <h2 style="margin: 0; font-size: 15px; font-weight: 700">Where this score goes</h2>
-<p style="margin: 0; font-size: 14px; line-height: 1.5; color: #1E3A66">It's saved under <strong><span class="type-name">Class exercise</span></strong> for the topic <strong>Ratio &amp; Proportion</strong>, so it counts toward the topic's difficulty and the student's report card.</p>
+<p style="margin: 0; font-size: 14px; line-height: 1.5; color: #1E3A66">It's saved under <strong><span class="type-name">Class exercise</span></strong> for the topic <strong class="topic-name">Ratio &amp; Proportion</strong>, so it counts toward the topic's difficulty and the student's report card.</p>
 </div>
 </section>
 </div>
 </main>
 </div>
-<script>
-const typeButtons = document.querySelectorAll('.type-btn');
-function pick(btn) {
-  typeButtons.forEach((b) => { b.classList.toggle('on', b === btn); b.setAttribute('aria-pressed', b === btn); });
-  const max = Number(btn.dataset.max);
-  document.getElementById('rs-max').value = max;
-  document.querySelectorAll('.max-out').forEach((s) => (s.textContent = max));
-  document.querySelectorAll('.type-name').forEach((s) => (s.textContent = btn.dataset.label));
-  document.querySelectorAll('.score-input').forEach((inp) => (inp.value = Math.round(Number(inp.dataset.ratio) * max)));
-}
-typeButtons.forEach((b) => b.addEventListener('click', () => pick(b)));
-pick(typeButtons[0]);
-</script>
+<script type="module" src="js/record-scores.js"></script>
 </body>
 </html>

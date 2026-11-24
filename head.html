@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ClassPulse — headmaster</title>
+<link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+[hidden] { display: none !important; }
+body { margin: 0; font-family: Inter, system-ui, sans-serif; background: #F6F8FB; color: #12305A; }
+a { color: #1E5AA8; } a:hover { color: #12305A; }
+h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; margin: 0; }
+.card { background: #FFFFFF; border: 1px solid #E2E7EF; border-radius: 16px; padding: 24px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+label { font-size: 14px; font-weight: 600; }
+input[type="text"], input[type="email"], input[type="number"], input[type="date"], select { height: 46px; padding: 0 12px; border: 1px solid #C9D2DF; border-radius: 10px; font-size: 15px; font-family: inherit; box-sizing: border-box; width: 100%; background: #FFFFFF; }
+.btn { height: 46px; padding: 0 18px; border-radius: 10px; border: none; font-weight: 700; font-size: 14px; font-family: inherit; cursor: pointer; }
+.btn-gold { background: #F2A300; color: #12305A; }
+.btn-navy { background: #12305A; color: #FFFFFF; }
+.btn-line { background: #FFFFFF; color: #12305A; border: 1px solid #C9D2DF; height: 40px; font-weight: 600; font-size: 13px; }
+.btn:disabled { opacity: 0.6; cursor: wait; }
+.pill { padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; border-bottom: 2px solid #E2E7EF; }
+.tab { height: 46px; padding: 0 18px; border: none; background: none; font-family: inherit; font-size: 15px; font-weight: 600; color: #5B6472; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; }
+.tab[aria-selected="true"] { color: #12305A; border-bottom-color: #F2A300; }
+.tile { flex: 1 1 180px; background: #FFFFFF; border: 1px solid #E2E7EF; border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 4px; }
+.tile strong { font-family: 'Space Grotesk', sans-serif; font-size: 28px; }
+.class-card { background: #FFFFFF; border: 1px solid #E2E7EF; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.rings { display: flex; justify-content: space-between; gap: 6px; }
+.ring { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; color: #5B6472; text-align: center; flex: 1; }
+.tools a { display: inline-flex; align-items: center; height: 40px; padding: 0 14px; border-radius: 10px; background: #FFFFFF; border: 1px solid #C9D2DF; color: #12305A; font-weight: 600; font-size: 14px; text-decoration: none; }
+.tools a:hover { border-color: #12305A; }
+.quick-btn { display: flex; align-items: center; gap: 12px; min-height: 68px; padding: 12px 16px; border-radius: 14px; border: 1px solid #E2E7EF; background: #FFFFFF; color: #12305A; font-family: inherit; font-size: 15px; text-align: left; text-decoration: none; cursor: pointer; }
+.quick-btn:hover, .quick-btn:focus-visible { border-color: #12305A; }
+.quick-btn small { color: #5B6472; font-size: 13px; }
+.q-icon { width: 44px; height: 44px; flex: none; border-radius: 12px; background: #FFF4D6; color: #8A5A00; display: flex; align-items: center; justify-content: center; }
+.need { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 10px; font-size: 14px; line-height: 1.5; }
+.need-red { background: #FDE8E7; color: #8F1D15; }
+.need-gold { background: #FFF4D6; color: #6B4E00; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { padding: 4px 10px; border-radius: 999px; background: #FFF4D6; color: #6B4E00; font-size: 13px; font-weight: 600; }
+</style>
+</head>
+<body>
+<div id="page" hidden>
+<header style="background: #12305A; padding: 0 24px">
+<div style="max-width: 1200px; margin: 0 auto; min-height: 64px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; box-sizing: border-box">
+<span style="display: flex; align-items: center; gap: 10px"><img src="images/logo-mark-light.svg" alt="" width="32" height="32"><span style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 20px; color: #FFFFFF">Class<span style="color: #FFC23D">Pulse</span></span><span class="pill" style="margin-left: 8px; background: rgba(255,255,255,0.12); color: #FFC23D">Headmaster</span></span>
+<div id="user-box" style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; color: #FFFFFF; font-size: 14px"></div>
+</div>
+</header>
+
+<main style="max-width: 1200px; margin: 0 auto; padding: 28px 24px 48px; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<p id="today-text" style="margin: 0; font-size: 14px; color: #5B6472"></p>
+<h1 id="school-name" style="font-size: 30px">Your school</h1>
+</div>
+<nav class="tools" aria-label="School tools" style="display: flex; flex-wrap: wrap; gap: 8px">
+<a href="students.html">Students &amp; rankings</a>
+<a href="report-card.html">Report cards</a>
+<a href="class-lists.html">Class lists</a>
+<button type="button" id="head-export" class="btn" style="height: 40px; background: #157F3B; color: #FFFFFF">Download everything (Excel)</button>
+</nav>
+</div>
+<p id="export-status" role="status" style="margin: 0; font-weight: 600"></p>
+
+<div class="tabs" role="tablist" aria-label="Headmaster sections">
+<button type="button" class="tab" role="tab" id="tab-overview" aria-controls="panel-overview" aria-selected="true">Overview</button>
+<button type="button" class="tab" role="tab" id="tab-teachers" aria-controls="panel-teachers" aria-selected="false">Teachers</button>
+<button type="button" class="tab" role="tab" id="tab-pins" aria-controls="panel-pins" aria-selected="false">Class PINs</button>
+<button type="button" class="tab" role="tab" id="tab-targets" aria-controls="panel-targets" aria-selected="false">Weekly targets</button>
+</div>
+
+<!-- Overview -->
+<section id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" style="display: flex; flex-direction: column; gap: 20px">
+<div class="quick" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px">
+<button type="button" class="quick-btn" data-go="teachers"><span class="q-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"></circle><path d="M3 21v-1a6 6 0 0 1 12 0v1"></path><path d="M19 8v6"></path><path d="M16 11h6"></path></svg></span><span><strong>Add a teacher</strong><br><small>Email, password, class or subjects</small></span></button>
+<button type="button" class="quick-btn" data-go="pins"><span class="q-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg></span><span><strong>Class PINs</strong><br><small>Set the PIN for each class</small></span></button>
+<button type="button" class="quick-btn" data-go="targets"><span class="q-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="5"></circle><circle cx="12" cy="12" r="1"></circle></svg></span><span><strong>Weekly targets</strong><br><small>Topics, exercises, tests</small></span></button>
+<a class="quick-btn" href="class-lists.html"><span class="q-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"></path><path d="M7 9l5-5 5 5"></path><path d="M4 20h16"></path></svg></span><span><strong>Upload students</strong><br><small>Class lists from Excel</small></span></a>
+</div>
+<div id="tiles" style="display: flex; flex-wrap: wrap; gap: 16px"></div>
+<div style="display: flex; flex-wrap: wrap; gap: 20px">
+<section class="card" style="flex: 1 1 340px; display: flex; flex-direction: column; gap: 12px" aria-labelledby="att-h">
+<h2 id="att-h" style="font-size: 18px">Today's attendance</h2>
+<div id="att-box"></div>
+</section>
+<section class="card" style="flex: 2 1 460px; display: flex; flex-direction: column; gap: 12px" aria-labelledby="needs-h">
+<h2 id="needs-h" style="font-size: 18px">Needs attention</h2>
+<div id="needs-box" style="display: flex; flex-direction: column; gap: 10px"></div>
+</section>
+</div>
+<p id="week-text" style="margin: 0; font-size: 14px; color: #5B6472"></p>
+<div id="levels" style="display: flex; flex-direction: column; gap: 28px"><p style="color: #5B6472">Loading classes…</p></div>
+</section>
+
+<!-- Teachers -->
+<section id="panel-teachers" role="tabpanel" aria-labelledby="tab-teachers" hidden style="display: flex; flex-direction: column; gap: 20px">
+<div class="card" style="display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px">
+<h2 id="t-title" style="font-size: 20px">Add a teacher</h2>
+<button type="button" id="t-cancel" class="btn btn-line" hidden>Cancel editing</button>
+</div>
+<form id="teacher-form" style="display: flex; flex-direction: column; gap: 16px" novalidate>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; align-items: end">
+<div class="field"><label for="t-name">Full name</label><input id="t-name" type="text" placeholder="e.g. Mrs. Akosua Mensah"></div>
+<div class="field login-field"><label for="t-email">Email</label><input id="t-email" type="email" placeholder="a.mensah@gmail.com"></div>
+<div class="field login-field"><label for="t-pass">Starting password</label>
+<div style="display: flex; gap: 8px"><input id="t-pass" type="text" autocomplete="off" style="flex: 1"><button type="button" id="t-gen" class="btn btn-line" style="height: 46px">New</button></div></div>
+</div>
+
+<fieldset style="border: 1px solid #E2E7EF; border-radius: 12px; padding: 12px 16px; margin: 0; display: flex; flex-wrap: wrap; gap: 8px 24px">
+<legend style="font-size: 14px; font-weight: 600; padding: 0 6px">Type of teacher</legend>
+<label style="display: flex; align-items: center; gap: 8px; font-weight: 500; min-height: 32px"><input type="radio" name="t-type" value="class" checked> <span><strong>Class teacher</strong> — one class, opens it with the class PIN</span></label>
+<label style="display: flex; align-items: center; gap: 8px; font-weight: 500; min-height: 32px"><input type="radio" name="t-type" value="subject"> <span><strong>Subject teacher</strong> — several classes, opens them with their own PIN</span></label>
+</fieldset>
+
+<div id="class-box" class="field" style="max-width: 320px">
+<label for="t-class">Their class</label>
+<select id="t-class"></select>
+</div>
+
+<div id="subject-box" hidden style="display: flex; flex-direction: column; gap: 14px">
+<fieldset style="border: 1px solid #E2E7EF; border-radius: 12px; padding: 12px 16px; margin: 0">
+<legend style="font-size: 14px; font-weight: 600; padding: 0 6px">Subjects they teach</legend>
+<div id="t-subjects" style="display: flex; flex-wrap: wrap; gap: 4px 20px"></div>
+<div class="field" style="margin-top: 8px; max-width: 360px"><label for="t-other-subject" style="font-weight: 500">Other subject <span style="color: #5B6472">(optional)</span></label><input id="t-other-subject" type="text" placeholder="e.g. Music"></div>
+</fieldset>
+<fieldset style="border: 1px solid #E2E7EF; border-radius: 12px; padding: 12px 16px; margin: 0; display: flex; flex-direction: column; gap: 10px">
+<legend style="font-size: 14px; font-weight: 600; padding: 0 6px">Classes they teach</legend>
+<label style="display: flex; align-items: center; gap: 8px; font-weight: 500; min-height: 32px; font-weight: 700"><input type="checkbox" id="t-all"> All classes in the school</label>
+<div id="t-classes" style="display: flex; flex-direction: column; gap: 8px"></div>
+</fieldset>
+<div class="field" style="max-width: 320px">
+<label for="t-pin">Their personal PIN <span style="font-weight: 400; color: #5B6472">(opens all their classes)</span></label>
+<div style="display: flex; gap: 8px"><input id="t-pin" type="text" inputmode="numeric" maxlength="6" placeholder="4–6 digits" style="flex: 1"><button type="button" id="t-pin-gen" class="btn btn-line" style="height: 46px">Make one</button></div>
+</div>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<button type="submit" id="t-add" class="btn btn-gold">Add teacher</button>
+<p id="t-status" role="status" style="margin: 0; font-weight: 600"></p>
+</div>
+</form>
+<div id="t-new" hidden style="background: #E3F4E8; border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px"></div>
+</div>
+<div class="card" style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="font-size: 20px">Teachers</h2>
+<div id="teacher-list" aria-live="polite"></div>
+<p id="tl-status" role="status" style="margin: 0; font-weight: 600"></p>
+</div>
+</section>
+
+<!-- Class PINs -->
+<section id="panel-pins" role="tabpanel" aria-labelledby="tab-pins" hidden style="display: flex; flex-direction: column; gap: 16px">
+<div class="card" style="display: flex; flex-direction: column; gap: 12px">
+<h2 style="font-size: 20px">Class PINs</h2>
+<p style="margin: 0; color: #5B6472; line-height: 1.6">Teachers need a class's PIN to open it. Give each class teacher their class PIN. Change a PIN any time — the old one stops working straight away.</p>
+<div id="pin-list" aria-live="polite"></div>
+<p id="pin-status" role="status" style="margin: 0; font-weight: 600"></p>
+</div>
+</section>
+
+<!-- Weekly targets -->
+<section id="panel-targets" role="tabpanel" aria-labelledby="tab-targets" hidden style="display: flex; flex-direction: column; gap: 16px">
+<div class="card" style="display: flex; flex-direction: column; gap: 16px">
+<h2 style="font-size: 20px">Weekly targets</h2>
+<p style="margin: 0; color: #5B6472; line-height: 1.6">Set what every class should do before the final exams. Teachers and you see the progress as circles — 100% when the week's target is met.</p>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px">
+<div class="field"><label for="term-start">Term starts</label><input id="term-start" type="date"></div>
+<div class="field"><label for="exam-date">Final exams begin</label><input id="exam-date" type="date"></div>
+</div>
+<div style="overflow-x: auto">
+<table style="width: 100%; min-width: 640px; border-collapse: collapse; font-size: 14px">
+<thead><tr style="text-align: left; color: #5B6472; font-size: 13px">
+<th style="padding: 8px">Level</th><th style="padding: 8px">New topics per week</th><th style="padding: 8px">Class exercises per week</th><th style="padding: 8px">Homework per week</th><th style="padding: 8px">Class tests per month</th>
+</tr></thead>
+<tbody id="target-rows"></tbody>
+</table>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<button type="button" id="targets-save" class="btn btn-navy">Save targets</button>
+<p id="targets-status" role="status" style="margin: 0; font-weight: 600"></p>
+</div>
+</div>
+</section>
+</main>
+</div>
+<script type="module" src="js/head.js"></script>
+</body>
+</html>

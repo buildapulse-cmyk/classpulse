@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="ClassPulse helps teachers record attendance and scores and follow each student's progress over the term.">
+<title>ClassPulse — class lists</title>
+<link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1E5AA8}a:hover{color:#12305A}
+</style>
+</head>
+<body>
+<div style="min-height: 100vh; background: #F6F8FB; font-family: Inter, system-ui, sans-serif; color: #12305A">
+<header style="background: #12305A; padding: 0 24px">
+<div style="max-width: 1200px; margin: 0 auto; min-height: 64px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 28px; padding: 10px 0; box-sizing: border-box">
+<a href="dashboard.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none"><img src="images/logo-mark-light.svg" alt="" width="32" height="32"><span style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 20px; color: #FFFFFF">Class<span style="color: #FFC23D">Pulse</span></span></a>
+<nav aria-label="Main" style="display: flex; flex-wrap: wrap; gap: 4px; flex: 1">
+<a href="dashboard.html" style="color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 500; padding: 10px 12px; border-radius: 8px">Dashboard</a>
+<a href="attendance.html" style="color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 500; padding: 10px 12px; border-radius: 8px">Attendance</a>
+<a href="record-scores.html" style="color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 500; padding: 10px 12px; border-radius: 8px">Record scores</a>
+<a href="topics.html" style="color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 500; padding: 10px 12px; border-radius: 8px">Topics</a>
+<a href="students.html" style="color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 500; padding: 10px 12px; border-radius: 8px">Students</a>
+<a href="class-lists.html" aria-current="page" style="color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 600; padding: 10px 12px; border-radius: 8px; background: rgba(255,255,255,0.12); box-shadow: inset 0 -3px 0 #FFC23D">Class lists</a></nav>
+<div id="user-box" style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; color: #FFFFFF; font-size: 14px"></div>
+</div>
+</header>
+<main style="max-width: 1200px; margin: 0 auto; padding: 32px 24px 48px; display: flex; flex-direction: column; gap: 24px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 32px">Class lists</h1>
+<p style="margin: 0; font-size: 15px; color: #5B6472">Add your classes and students here. Type students in one by one, or upload the class list from Excel.</p>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 24px">
+<section style="flex: 1 1 340px; background: #FFFFFF; border: 1px solid #E2E7EF; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 14px">
+<h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 20px">1. Choose or add a class</h2>
+<div style="display: flex; flex-direction: column; gap: 6px"><label for="cl-class" style="font-size: 14px; font-weight: 600">Class</label><select id="cl-class" style="height: 46px; padding: 0 12px; border: 1px solid #C9D2DF; border-radius: 10px; font-size: 15px; font-family: inherit; background: #FFFFFF; box-sizing: border-box"><option value="">Loading classes…</option></select></div>
+<form id="new-class-form" style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end">
+<div style="flex: 1 1 160px; display: flex; flex-direction: column; gap: 6px"><label for="new-class" style="font-size: 14px; font-weight: 600">Class</label><select id="new-class" style="height: 46px; padding: 0 12px; border: 1px solid #C9D2DF; border-radius: 10px; font-size: 15px; font-family: inherit; background: #FFFFFF; box-sizing: border-box"></select></div>
+<div style="flex: 0 1 120px; display: flex; flex-direction: column; gap: 6px"><label for="new-stream" style="font-size: 14px; font-weight: 600">Stream <span style="font-weight: 400; color: #5B6472">(optional)</span></label><input id="new-stream" type="text" placeholder="e.g. A" maxlength="12" style="height: 46px; padding: 0 12px; border: 1px solid #C9D2DF; border-radius: 10px; font-size: 15px; font-family: inherit; background: #FFFFFF; box-sizing: border-box"></div>
+<button type="submit" style="height: 46px; padding: 0 18px; border-radius: 10px; border: none; font-weight: 700; font-size: 14px; font-family: inherit; cursor: pointer; background: #12305A; color: #FFFFFF">Add class</button>
+</form>
+<p id="class-status" role="status" style="margin: 0; font-weight: 600"></p>
+</section>
+<section style="flex: 1 1 340px; background: #FFFFFF; border: 1px solid #E2E7EF; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 14px">
+<h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 20px">2. Add a student</h2>
+<form id="add-form" style="display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 6px"><label for="st-name" style="font-size: 14px; font-weight: 600">Full name</label><input id="st-name" type="text" placeholder="e.g. Kwame Asante" required autocomplete="off" style="height: 46px; padding: 0 12px; border: 1px solid #C9D2DF; border-radius: 10px; font-size: 15px; font-family: inherit; background: #FFFFFF; box-sizing: border-box"></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><label for="st-number" style="font-size: 14px; font-weight: 600">Student number <span style="font-weight: 400; color: #5B6472">(optional)</span></label><input id="st-number" type="text" placeholder="e.g. WMJ-2026-014" autocomplete="off" style="height: 46px; padding: 0 12px; border: 1px solid #C9D2DF; border-radius: 10px; font-size: 15px; font-family: inherit; background: #FFFFFF; box-sizing: border-box"></div>
+<button type="submit" style="height: 46px; padding: 0 18px; border-radius: 10px; border: none; font-weight: 700; font-size: 14px; font-family: inherit; cursor: pointer; background: #F2A300; color: #12305A; align-self: flex-start">Add student</button>
+</form>
+<p id="add-status" role="status" style="margin: 0; font-weight: 600"></p>
+</section>
+</div>
+<section style="background: #FFFFFF; border: 1px solid #E2E7EF; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 14px">
+<h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 20px">3. Or upload a class list from Excel</h2>
+<p style="margin: 0; font-size: 14px; line-height: 1.6; color: #5B6472">Use an Excel (.xlsx) or .csv file with a <strong>Name</strong> column. You can also add a <strong>Class</strong> column (for example KG 1, Primary 4, JHS 2A) to put students into different classes at once — new classes are created for you — and a <strong>Student number</strong> column.</p>
+<div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center">
+<label for="upload-file" style="height: 46px; padding: 0 18px; border-radius: 10px; border: 1px solid #C9D2DF; font-weight: 600; font-size: 14px; display: flex; align-items: center; cursor: pointer; background: #FFFFFF">Choose Excel file</label>
+<input id="upload-file" type="file" accept=".xlsx,.xls,.csv" style="position: absolute; width: 1px; height: 1px; opacity: 0">
+<span id="upload-name" style="font-size: 14px; color: #5B6472">No file chosen</span>
+</div>
+<div id="upload-preview"></div>
+<div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center">
+<button type="button" id="upload-save" hidden style="height: 46px; padding: 0 18px; border-radius: 10px; border: none; font-weight: 700; font-size: 14px; font-family: inherit; cursor: pointer; background: #F2A300; color: #12305A">Add these students</button>
+<p id="upload-status" role="status" style="margin: 0; font-weight: 600"></p>
+</div>
+</section>
+<section style="background: #FFFFFF; border: 1px solid #E2E7EF; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px">
+<h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 20px">Students in <span id="list-class">this class</span></h2>
+<span id="list-count" style="font-size: 14px; color: #5B6472"></span>
+</div>
+<div id="student-list" aria-live="polite"></div>
+<p id="list-status" role="status" style="margin: 0; font-weight: 600"></p>
+</section>
+</main>
+</div>
+<script type="module" src="js/class-lists.js"></script>
+</body>
+</html>
