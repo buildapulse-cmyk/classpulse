@@ -6,9 +6,9 @@ import { db } from "./firebase.js";
 import { collection, getDocs, query, where, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 import { BANDS, average, bandOf, shortDate, ordinal, todayIso, resultsFor, rank } from "./results.js";
 
-import { useSchool, schoolCol, schoolDoc } from "./school.js";
+import { useSchool, schoolCol, schoolDoc, isAllowed } from "./school.js";
+import { withTargetDefaults, classProgress, ring } from "./progress.js";
 import { classOrder, groupedOptions } from "./levels.js";
-import { exportButton } from "./export.js";
 
 // Teachers only (the headmaster sees progress on the headmaster portal instead)
 await useSchool("teacher");
@@ -31,6 +31,7 @@ document.getElementById("today-text").textContent =
   new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
 let loaded = { classes: [], assessments: [] };
+let targets = withTargetDefaults();
 
 // ---------- Load everything ----------
 async function loadDashboard() {
@@ -39,22 +40,26 @@ async function loadDashboard() {
     // Attendance from the last 30 days only (keeps reads low)
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-    const [classSnap, assessSnap, topicSnap, attendSnap] = await Promise.all([
+    const [classSnap, assessSnap, topicSnap, attendSnap, targetDoc] = await Promise.all([
       getDocs(schoolCol("classes")),
       getDocs(schoolCol("assessments")),
       getDocs(schoolCol("topics")),
-      getDocs(query(schoolCol("attendance"), where("date", ">=", since)))
+      getDocs(query(schoolCol("attendance"), where("date", ">=", since))),
+      getDoc(schoolDoc("settings", "targets"))
     ]);
 
-    const classes = classSnap.docs.map((d) => d.data()).sort(classOrder);
-    const assessments = assessSnap.docs.map((d) => d.data());
-    const topics = topicSnap.docs.map((d) => d.data());
-    const attendance = attendSnap.docs.map((d) => d.data());
+    // Only the classes this teacher unlocked with their PIN
+    const classes = classSnap.docs.map((d) => d.data()).filter((c) => isAllowed(c.className)).sort(classOrder);
+    const mine = (list) => list.filter((x) => isAllowed(x.className));
+    const assessments = mine(assessSnap.docs.map((d) => d.data()));
+    const topics = mine(topicSnap.docs.map((d) => d.data()));
+    const attendance = mine(attendSnap.docs.map((d) => d.data()));
+    targets = withTargetDefaults(targetDoc.exists() ? targetDoc.data() : {});
 
     loaded = { classes, assessments };
     status.hidden = true;
     drawTiles(classes, assessments, attendance);
-    drawTodayClasses(classes, topics, attendance);
+    drawTodayClasses(classes, topics, attendance, assessments);
     drawHardTopics(assessments);
     drawLeaders(classes, assessments);
     drawRecent(assessments);
@@ -104,7 +109,7 @@ function drawTiles(classes, assessments, attendance) {
 }
 
 // ---------- Today's classes ----------
-function drawTodayClasses(classes, topics, attendance) {
+function drawTodayClasses(classes, topics, attendance, assessments) {
   const today = todayIso();
   document.getElementById("today-classes").innerHTML = classes.map((c, i) => {
     const register = attendance.find((a) => a.className === c.className && a.date === today);
@@ -119,6 +124,10 @@ function drawTodayClasses(classes, topics, attendance) {
           <span style="font-size: 13px; color: #5B6472">${current.length ? "Current topic — " + current.join(" · ") : "No topic in progress"}</span>
         </div>
         ${right}
+        <div style="flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 16px">
+          ${classProgress(c.className, targets, topics, assessments).items.map((i) => `
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #5B6472">${ring(i.percent, 46, `${i.label} ${i.note}`)}<span><strong style="color: #12305A">${i.label}</strong><br>${i.target > 0 ? `${i.done} of ${i.target} ${i.note}` : "no target"}</span></div>`).join("")}
+        </div>
       </div>`;
   }).join("") || '<p style="color: #5B6472">No classes yet.</p>';
 }
@@ -215,7 +224,5 @@ function drawAttention(classes, assessments, attendance) {
       (items.length > 6 ? `<p style="margin: 0; font-size: 13px; color: #5B6472">and ${items.length - 6} more</p>` : "");
 }
 
-// ---------- Download everything to Excel ----------
-exportButton(document.getElementById("export-btn"), document.getElementById("export-status"));
 
 loadDashboard();

@@ -1,7 +1,7 @@
 // js/login.js
 // The welcome page: choose Teacher, Headmaster or Parent, then log in.
 
-import { logIn, whoAmI, HOME, parentLogin, resetPassword, friendlyError } from "./auth.js";
+import { logIn, whoAmI, HOME, parentLogin, parentPassword, resetPassword, friendlyError } from "./auth.js";
 
 const roleButtons = document.querySelectorAll(".role");
 const form = document.getElementById("login-form");
@@ -45,7 +45,7 @@ function pickRole(newRole) {
     idInput.type = "text";
     idInput.placeholder = "e.g. ama.boateng";
     passInput.inputMode = "numeric";
-    passInput.placeholder = "6-digit PIN";
+    passInput.placeholder = "Your PIN";
     forgotBtn.textContent = "Forgot your PIN? Please ask the school.";
   } else {
     document.getElementById("login-label").textContent = "Email";
@@ -75,7 +75,7 @@ form.addEventListener("submit", async (e) => {
   say("Logging in…");
   try {
     const login = role === "parent" ? parentLogin(id) : id;
-    await logIn(role, login, pass);
+    await logIn(role, login, role === "parent" ? parentPassword(pass) : pass);
     say("Welcome! Opening your page…", "#157F3B");
     location.href = HOME[role];
   } catch (error) {

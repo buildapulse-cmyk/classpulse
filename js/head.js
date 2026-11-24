@@ -6,10 +6,11 @@ import { db } from "./firebase.js";
 import { getDocs, getDoc, setDoc, updateDoc, query, where, collection, doc, writeBatch, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 import { useSchool, schoolCol, schoolDoc, SCHOOL } from "./school.js";
-import { createLogin, resetPassword, friendlyError } from "./auth.js";
+import { createLogin, resetPassword, friendlyError, parentLogin, parentPassword } from "./auth.js";
 import { LEVELS, SUBJECTS, levelOf, classOrder } from "./levels.js";
 import { average, bandOf, BANDS, resultsFor } from "./results.js";
 import { exportButton } from "./export.js";
+import { monthlyScores, monthlyAttendance, monthBars, miniBars } from "./charts.js";
 import { withTargetDefaults, currentPeriods, classProgress, ring, isoDate } from "./progress.js";
 import { hashPin, newPin } from "./pins.js";
 
@@ -24,11 +25,14 @@ function say(id, text, color) { $(id).textContent = text; $(id).style.color = co
 
 let classes = [];
 let teachers = [];
+let parents = [];
+let newChildren = []; // children picked for the parent being added
 let targets = withTargetDefaults();
 let pins = {};
+let profile = { schoolName: "", motto: "", term: "", badge: null };
 
 // ---------- Tabs ----------
-const tabs = ["overview", "teachers", "pins", "targets"];
+const tabs = ["overview", "teachers", "parents", "pins", "targets", "profile"];
 function showTab(name) {
   tabs.forEach((t) => {
     $(`tab-${t}`).setAttribute("aria-selected", t === name);
@@ -45,12 +49,18 @@ exportButton($("head-export"), $("export-status"));
 // ---------- Load ----------
 async function loadAll() {
   const periods = currentPeriods();
-  const [classSnap, teacherSnap, targetDoc, pinDoc] = await Promise.all([
+  const [classSnap, teacherSnap, targetDoc, pinDoc, reportDoc, parentSnap] = await Promise.all([
     getDocs(schoolCol("classes")),
     getDocs(query(collection(db, "users"), where("schoolId", "==", SCHOOL.id), where("role", "==", "teacher"))),
     getDoc(schoolDoc("settings", "targets")),
-    getDoc(schoolDoc("private", "pins"))
+    getDoc(schoolDoc("private", "pins")),
+    getDoc(schoolDoc("settings", "report")),
+    getDocs(query(collection(db, "users"), where("schoolId", "==", SCHOOL.id), where("role", "==", "parent")))
   ]);
+  parents = parentSnap.docs.map((d) => ({ uid: d.id, ...d.data() })).sort((a, b) => a.name.localeCompare(b.name));
+  const report = reportDoc.exists() ? reportDoc.data() : {};
+  profile = { schoolName: report.schoolName || "", motto: report.motto || "", term: report.term || "", badge: report.badge || null, parentsCanSee: !!report.parentsCanSee };
+  drawProfile();
   classes = classSnap.docs.map((d) => ({ id: d.id, ...d.data() })).sort(classOrder);
   teachers = teacherSnap.docs.map((d) => ({ uid: d.id, ...d.data() })).sort((a, b) => a.name.localeCompare(b.name));
   targets = withTargetDefaults(targetDoc.exists() ? targetDoc.data() : {});
@@ -62,16 +72,23 @@ async function loadAll() {
   const [assessSnap, topicSnap, attendSnap] = await Promise.all([
     getDocs(query(schoolCol("assessments"), where("date", ">=", from))),
     getDocs(query(schoolCol("topics"), where("startDate", ">=", periods.earliest))),
-    getDocs(query(schoolCol("attendance"), where("date", ">=", isoDate(new Date(Date.now() - 30 * 86400000)))))
+    getDocs(query(schoolCol("attendance"), where("date", ">=", since < periods.earliest ? since : periods.earliest)))
   ]);
   const assessments = assessSnap.docs.map((d) => d.data());
   const topics = topicSnap.docs.map((d) => d.data());
-  const registers30 = attendSnap.docs.map((d) => d.data());
+  const termRegisters = attendSnap.docs.map((d) => d.data());
+  const cutoff = isoDate(new Date(Date.now() - 30 * 86400000));
+  const registers30 = termRegisters.filter((a) => a.date >= cutoff);
   const todayRegisters = registers30.filter((a) => a.date === isoDate(new Date()));
 
-  drawOverview(assessments.filter((a) => a.date >= since), assessments, topics, todayRegisters, periods, registers30);
+  const termScores = assessments.filter((a) => a.date >= since);
+  drawOverview(termScores, assessments, topics, todayRegisters, periods, registers30);
+  $("chart-scores").innerHTML = monthBars(monthlyScores(termScores), { title: "School average score by month" });
+  $("chart-attendance").innerHTML = monthBars(monthlyAttendance(termRegisters.filter((a) => a.date >= since)), { kind: "attendance", title: "School attendance by month" });
   fillClassPickers();
   drawTeachers();
+  fillParentPickers();
+  drawParents();
   drawPins();
   drawTargets();
 }
@@ -198,6 +215,7 @@ function classCard(c, termScores, recentScores, topics, todayRegisters, periods)
       </div>
       ${band ? `<span class="pill" style="background: ${band.soft}; color: ${band.color}">${avg}%</span>` : '<span class="pill" style="background: #EEF1F6; color: #5B6472">No scores</span>'}
     </div>
+    ${mine.length ? `<div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 12px; font-weight: 600; color: #5B6472">Average by month</span>${miniBars(monthlyScores(mine))}</div>` : ""}
     <div class="rings">
       ${prog.items.map((i) => `<div class="ring">${ring(i.percent, 58, `${i.label} ${i.note}`)}<span><strong style="color: #12305A">${i.label}</strong><br>${i.target > 0 ? `${i.done} of ${i.target}` : "no target"}</span></div>`).join("")}
     </div>
@@ -350,8 +368,8 @@ $("teacher-form").addEventListener("submit", async (e) => {
     classes.forEach((c) => {
       const isTheirClass = type === "class" && c.id === classIds[0];
       if (isTheirClass) {
-        batch.set(schoolDoc("classes", c.id), { classTeacherUid: uid, classTeacherName: name }, { merge: true });
-        if (c.classTeacherUid && c.classTeacherUid !== uid) batch.set(doc(db, "users", c.classTeacherUid), { classIds: [] }, { merge: true });
+        batch.set(schoolDoc("classes", c.id), { classTeacherUid: uid, classTeacherName: name, classTeacherSim: false }, { merge: true });
+        if (c.classTeacherUid && c.classTeacherUid !== uid && !c.classTeacherSim) batch.set(doc(db, "users", c.classTeacherUid), { classIds: [] }, { merge: true });
       } else if (c.classTeacherUid === uid) {
         batch.set(schoolDoc("classes", c.id), { classTeacherUid: null, classTeacherName: null }, { merge: true });
       }
@@ -427,6 +445,105 @@ function drawTeachers() {
   }));
 }
 
+// ---------- Parents ----------
+// A parent logs in with a username + PIN and sees only the children linked here.
+$("pa-pin-gen").addEventListener("click", () => ($("pa-pin").value = newPin()));
+$("pa-name").addEventListener("input", () => {
+  if ($("pa-user").dataset.touched) return;
+  $("pa-user").value = $("pa-name").value.toLowerCase().replace(/^(mr|mrs|ms|dr|miss|madam)\.?\s+/i, "").trim().replace(/[^a-z0-9]+/g, ".").replace(/^\.|\.$/g, "");
+});
+$("pa-user").addEventListener("input", () => ($("pa-user").dataset.touched = "1"));
+
+function fillParentPickers() {
+  const keep = $("pa-class").value;
+  $("pa-class").innerHTML = classes.map((c) => `<option value="${c.id}">${c.className}</option>`).join("");
+  if (classes.some((c) => c.id === keep)) $("pa-class").value = keep;
+  fillStudentPicker();
+}
+function fillStudentPicker() {
+  const c = classes.find((x) => x.id === $("pa-class").value);
+  const list = c ? (c.students || []) : [];
+  $("pa-student").innerHTML = list.length ? list.map((s) => `<option value="${s.id}">${s.name}</option>`).join("") : '<option value="">No students in this class</option>';
+}
+$("pa-class").addEventListener("change", fillStudentPicker);
+
+function drawNewChildren() {
+  $("pa-children").innerHTML = newChildren.length
+    ? newChildren.map((k, i) => `<span class="chip" style="display: inline-flex; align-items: center; gap: 6px">${k.name} · ${k.className}<button type="button" data-drop="${i}" aria-label="Remove ${k.name}" style="border: none; background: none; cursor: pointer; font-size: 16px; color: #6B4E00; min-width: 24px; min-height: 24px">×</button></span>`).join("")
+    : '<span style="font-size: 13px; color: #5B6472">No child added yet.</span>';
+  document.querySelectorAll("[data-drop]").forEach((b) => b.addEventListener("click", () => { newChildren.splice(Number(b.dataset.drop), 1); drawNewChildren(); }));
+}
+$("pa-add-child").addEventListener("click", () => {
+  const c = classes.find((x) => x.id === $("pa-class").value);
+  const s = c && (c.students || []).find((x) => x.id === $("pa-student").value);
+  if (!s) return;
+  if (!newChildren.some((k) => k.id === s.id)) newChildren.push({ id: s.id, name: s.name, className: c.className });
+  drawNewChildren();
+});
+drawNewChildren();
+
+$("parent-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const name = $("pa-name").value.trim().replace(/\s+/g, " ");
+  const username = $("pa-user").value.trim().toLowerCase();
+  const pin = $("pa-pin").value.trim();
+  if (!name) return say("pa-status", "Please type the parent's name.", "#B42318");
+  if (!/^[a-z0-9.]{3,40}$/.test(username)) return say("pa-status", "The username can use letters, numbers and dots (at least 3).", "#B42318");
+  if (!/^\d{4,6}$/.test(pin)) return say("pa-status", "The PIN must be 4 to 6 digits (or click Make one).", "#B42318");
+  if (newChildren.length === 0) return say("pa-status", "Add at least one child.", "#B42318");
+
+  $("pa-add").disabled = true;
+  say("pa-status", "Creating the parent's login…", "#12305A");
+  try {
+    const uid = await createLogin(parentLogin(username), parentPassword(pin));
+    await setDoc(doc(db, "users", uid), {
+      role: "parent", name, username, schoolId: SCHOOL.id, children: newChildren, active: true, createdAt: serverTimestamp()
+    });
+    await setDoc(schoolDoc("private", "pins"), { [`parent-${uid}`]: pin }, { merge: true });
+    $("pa-new").hidden = false;
+    $("pa-new").innerHTML = `
+      <strong style="color: #115E2C">${name} added ✓ Give these details to the parent:</strong>
+      <span>Website: <strong>${location.origin}${location.pathname.replace("head.html", "index.html")}</strong> → Parent</span>
+      <span>Username: <strong>${username}</strong> · PIN: <strong>${pin}</strong></span>
+      <span>Linked to: ${newChildren.map((k) => `${k.name} (${k.className})`).join(", ")}</span>`;
+    $("parent-form").reset();
+    delete $("pa-user").dataset.touched;
+    newChildren = [];
+    drawNewChildren();
+    say("pa-status", "", "");
+    await loadAll();
+  } catch (error) {
+    say("pa-status", error.code === "auth/email-already-in-use" ? "That username is already taken. Please choose another." : friendlyError(error), "#B42318");
+  } finally {
+    $("pa-add").disabled = false;
+  }
+});
+
+function drawParents() {
+  if (parents.length === 0) {
+    $("parent-list").innerHTML = '<p style="margin: 0; color: #5B6472">No parents yet.</p>';
+    return;
+  }
+  $("parent-list").innerHTML = parents.map((p, i) => `
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 0; ${i < parents.length - 1 ? "border-bottom: 1px solid #EEF1F6" : ""}">
+      <div style="flex: 1 1 320px; display: flex; flex-direction: column; gap: 3px">
+        <span style="font-weight: 600">${p.name} ${p.active === false ? '<span class="pill" style="background: #FDE8E7; color: #8F1D15">Switched off</span>' : ""}</span>
+        <span style="font-size: 13px; color: #5B6472">Username <strong>${p.username}</strong>${pins[`parent-${p.uid}`] ? ` · PIN <strong style="letter-spacing: 2px">${pins[`parent-${p.uid}`]}</strong>` : ""}</span>
+        <span style="font-size: 13px">${(p.children || []).map((k) => `${k.name} (${k.className})`).join(", ")}</span>
+      </div>
+      <button type="button" class="btn btn-line" data-ptoggle="${p.uid}">${p.active === false ? "Switch on" : "Switch off"}</button>
+    </div>`).join("");
+  document.querySelectorAll("[data-ptoggle]").forEach((b) => b.addEventListener("click", async () => {
+    const p = parents.find((x) => x.uid === b.dataset.ptoggle);
+    const off = p.active !== false;
+    try {
+      await updateDoc(doc(db, "users", p.uid), { active: !off });
+      say("pl-status", `${p.name} ${off ? "switched off" : "switched on"} ✓`, "#157F3B");
+      await loadAll();
+    } catch (error) { say("pl-status", "Could not change: " + error.message, "#B42318"); }
+  }));
+}
+
 // ---------- Class PINs ----------
 function drawPins() {
   if (classes.length === 0) {
@@ -489,6 +606,78 @@ $("targets-save").addEventListener("click", async () => {
     await loadAll();
   } catch (error) {
     say("targets-status", "Could not save: " + error.message, "#B42318");
+  }
+});
+
+// ---------- School profile (crest, name, motto, term) ----------
+// Saved with the report card settings, so every report card uses them.
+function showCrest() {
+  $("crest-preview").innerHTML = profile.badge
+    ? `<img src="${profile.badge}" alt="School crest" style="width: 100%; height: 100%; object-fit: contain">`
+    : "No crest yet";
+  $("school-crest").src = profile.badge || "images/logo-mark.svg";
+  $("school-crest").alt = profile.badge ? `${profile.schoolName || SCHOOL.name} crest` : "";
+}
+
+function drawProfile() {
+  $("p-name").value = profile.schoolName || SCHOOL.name || "";
+  $("p-motto").value = profile.motto || "";
+  $("p-term").value = profile.term || "";
+  $("p-parents-see").checked = !!profile.parentsCanSee;
+  $("school-name").textContent = profile.schoolName || SCHOOL.name || "Your school";
+  $("school-motto").textContent = profile.motto || "";
+  showCrest();
+}
+
+// Shrink the picture so it is small enough to save in the database
+function resizeImage(file, maxSize = 300) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(img.src);
+      resolve(canvas.toDataURL("image/png"));
+    };
+    img.onerror = () => reject(new Error("That file isn't a picture we can read."));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+$("crest-file").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    profile.badge = await resizeImage(file);
+    showCrest();
+    say("profile-status", "Crest added — click Save school profile to keep it.", "#8A5A00");
+  } catch (error) {
+    say("profile-status", error.message, "#B42318");
+  }
+  e.target.value = "";
+});
+
+$("crest-remove").addEventListener("click", () => {
+  profile.badge = null;
+  showCrest();
+  say("profile-status", "Crest removed — click Save school profile to keep this.", "#8A5A00");
+});
+
+$("profile-save").addEventListener("click", async () => {
+  profile.schoolName = $("p-name").value.trim();
+  profile.motto = $("p-motto").value.trim();
+  profile.term = $("p-term").value.trim();
+  profile.parentsCanSee = $("p-parents-see").checked;
+  if (!profile.schoolName) return say("profile-status", "Please type the school name.", "#B42318");
+  try {
+    await setDoc(schoolDoc("settings", "report"), { ...profile, updatedAt: serverTimestamp() }, { merge: true });
+    drawProfile();
+    say("profile-status", "School profile saved ✓ Report cards now use it.", "#157F3B");
+  } catch (error) {
+    say("profile-status", "Could not save: " + error.message, "#B42318");
   }
 });
 

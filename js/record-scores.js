@@ -6,7 +6,7 @@ import { db } from "./firebase.js";
 import {
   collection, addDoc, doc, getDoc, query, where, getDocs, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-import { fillClassSelect } from "./classes.js";
+import { fillClassSelect, fillSubjectSelect } from "./classes.js";
 
 import { useSchool, schoolCol, schoolDoc } from "./school.js";
 
@@ -182,4 +182,5 @@ classSelect.addEventListener("change", () => { loadClass(); loadTopics(); });
 subjectSelect.addEventListener("change", loadTopics);
 
 pickType(typeButtons[0]);
+fillSubjectSelect(subjectSelect);
 fillClassSelect(classSelect).then(() => { loadClass(); loadTopics(); });

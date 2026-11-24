@@ -6,7 +6,7 @@ import { db } from "./firebase.js";
 import {
   collection, query, where, getDocs, addDoc, doc, updateDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-import { fillClassSelect } from "./classes.js";
+import { fillClassSelect, fillSubjectSelect } from "./classes.js";
 
 import { useSchool, schoolCol, schoolDoc } from "./school.js";
 
@@ -198,4 +198,5 @@ startForm.addEventListener("submit", async (event) => {
 classSelect.addEventListener("change", loadTopics);
 subjectSelect.addEventListener("change", loadTopics);
 
+fillSubjectSelect(subjectSelect);
 fillClassSelect(classSelect).then(loadTopics);

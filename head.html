@@ -55,8 +55,14 @@ input[type="text"], input[type="email"], input[type="number"], input[type="date"
 <main style="max-width: 1200px; margin: 0 auto; padding: 28px 24px 48px; display: flex; flex-direction: column; gap: 20px">
 <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px">
 <div style="display: flex; flex-direction: column; gap: 4px">
+<div style="display: flex; align-items: center; gap: 14px">
+<img id="school-crest" src="images/logo-mark.svg" alt="" width="56" height="56" style="width: 56px; height: 56px; object-fit: contain">
+<div style="display: flex; flex-direction: column; gap: 2px">
 <p id="today-text" style="margin: 0; font-size: 14px; color: #5B6472"></p>
 <h1 id="school-name" style="font-size: 30px">Your school</h1>
+<p id="school-motto" style="margin: 0; font-size: 14px; font-style: italic; color: #5B6472"></p>
+</div>
+</div>
 </div>
 <nav class="tools" aria-label="School tools" style="display: flex; flex-wrap: wrap; gap: 8px">
 <a href="students.html">Students &amp; rankings</a>
@@ -70,8 +76,10 @@ input[type="text"], input[type="email"], input[type="number"], input[type="date"
 <div class="tabs" role="tablist" aria-label="Headmaster sections">
 <button type="button" class="tab" role="tab" id="tab-overview" aria-controls="panel-overview" aria-selected="true">Overview</button>
 <button type="button" class="tab" role="tab" id="tab-teachers" aria-controls="panel-teachers" aria-selected="false">Teachers</button>
+<button type="button" class="tab" role="tab" id="tab-parents" aria-controls="panel-parents" aria-selected="false">Parents</button>
 <button type="button" class="tab" role="tab" id="tab-pins" aria-controls="panel-pins" aria-selected="false">Class PINs</button>
 <button type="button" class="tab" role="tab" id="tab-targets" aria-controls="panel-targets" aria-selected="false">Weekly targets</button>
+<button type="button" class="tab" role="tab" id="tab-profile" aria-controls="panel-profile" aria-selected="false">School profile</button>
 </div>
 
 <!-- Overview -->
@@ -93,6 +101,16 @@ input[type="text"], input[type="email"], input[type="number"], input[type="date"
 <div id="needs-box" style="display: flex; flex-direction: column; gap: 10px"></div>
 </section>
 </div>
+<section class="card" style="display: flex; flex-direction: column; gap: 16px" aria-labelledby="months-h">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px">
+<h2 id="months-h" style="font-size: 18px">School progress by month</h2>
+<span style="font-size: 13px; color: #5B6472">All classes together, this term</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 28px">
+<div style="display: flex; flex-direction: column; gap: 10px"><h3 style="font-size: 15px">Average score</h3><div id="chart-scores"></div></div>
+<div style="display: flex; flex-direction: column; gap: 10px"><h3 style="font-size: 15px">Attendance</h3><div id="chart-attendance"></div></div>
+</div>
+</section>
 <p id="week-text" style="margin: 0; font-size: 14px; color: #5B6472"></p>
 <div id="levels" style="display: flex; flex-direction: column; gap: 28px"><p style="color: #5B6472">Loading classes…</p></div>
 </section>
@@ -154,6 +172,43 @@ input[type="text"], input[type="email"], input[type="number"], input[type="date"
 </div>
 </section>
 
+<!-- Parents -->
+<section id="panel-parents" role="tabpanel" aria-labelledby="tab-parents" hidden style="display: flex; flex-direction: column; gap: 20px">
+<div class="card" style="display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h2 style="font-size: 20px">Add a parent</h2>
+<p style="margin: 0; color: #5B6472; font-size: 14px">Parents log in with a username and PIN — no email needed. They only ever see their own child.</p>
+</div>
+<form id="parent-form" style="display: flex; flex-direction: column; gap: 16px" novalidate>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; align-items: end">
+<div class="field"><label for="pa-name">Parent's name</label><input id="pa-name" type="text" placeholder="e.g. Mrs. Comfort Boateng"></div>
+<div class="field"><label for="pa-user">Username</label><input id="pa-user" type="text" autocomplete="off" placeholder="e.g. comfort.boateng"></div>
+<div class="field"><label for="pa-pin">PIN</label>
+<div style="display: flex; gap: 8px"><input id="pa-pin" type="text" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="4–6 digits" style="flex: 1"><button type="button" id="pa-pin-gen" class="btn btn-line" style="height: 46px">Make one</button></div></div>
+</div>
+<fieldset style="border: 1px solid #E2E7EF; border-radius: 12px; padding: 12px 16px; margin: 0; display: flex; flex-direction: column; gap: 10px">
+<legend style="font-size: 14px; font-weight: 600; padding: 0 6px">Their child (or children)</legend>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: end">
+<div class="field" style="flex: 1 1 160px"><label for="pa-class" style="font-weight: 500">Class</label><select id="pa-class"></select></div>
+<div class="field" style="flex: 2 1 220px"><label for="pa-student" style="font-weight: 500">Student</label><select id="pa-student"></select></div>
+<button type="button" id="pa-add-child" class="btn btn-line" style="height: 46px">Add child</button>
+</div>
+<div id="pa-children" class="chips"></div>
+</fieldset>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<button type="submit" id="pa-add" class="btn btn-gold">Add parent</button>
+<p id="pa-status" role="status" style="margin: 0; font-weight: 600"></p>
+</div>
+</form>
+<div id="pa-new" hidden style="background: #E3F4E8; border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px"></div>
+</div>
+<div class="card" style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="font-size: 20px">Parents</h2>
+<div id="parent-list" aria-live="polite"></div>
+<p id="pl-status" role="status" style="margin: 0; font-weight: 600"></p>
+</div>
+</section>
+
 <!-- Class PINs -->
 <section id="panel-pins" role="tabpanel" aria-labelledby="tab-pins" hidden style="display: flex; flex-direction: column; gap: 16px">
 <div class="card" style="display: flex; flex-direction: column; gap: 12px">
@@ -184,6 +239,37 @@ input[type="text"], input[type="email"], input[type="number"], input[type="date"
 <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
 <button type="button" id="targets-save" class="btn btn-navy">Save targets</button>
 <p id="targets-status" role="status" style="margin: 0; font-weight: 600"></p>
+</div>
+</div>
+</section>
+<!-- School profile -->
+<section id="panel-profile" role="tabpanel" aria-labelledby="tab-profile" hidden style="display: flex; flex-direction: column; gap: 16px">
+<div class="card" style="display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h2 style="font-size: 20px">School profile</h2>
+<p style="margin: 0; color: #5B6472">The crest, name and motto appear at the top of every report card and on this portal.</p>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+<div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-start">
+<span style="font-size: 14px; font-weight: 600">School crest / badge</span>
+<div id="crest-preview" style="width: 140px; height: 140px; border: 2px dashed #C9D2DF; border-radius: 16px; display: flex; align-items: center; justify-content: center; color: #5B6472; font-size: 13px; text-align: center; overflow: hidden; background: #FFFFFF">No crest yet</div>
+<div style="display: flex; gap: 8px">
+<label for="crest-file" class="btn btn-line" style="display: inline-flex; align-items: center; cursor: pointer">Upload crest</label>
+<input id="crest-file" type="file" accept="image/*" style="position: absolute; width: 1px; height: 1px; opacity: 0">
+<button type="button" id="crest-remove" class="btn btn-line">Remove</button>
+</div>
+<span style="font-size: 12px; color: #5B6472; max-width: 220px">A clear picture of the crest works best — a phone photo is fine. It is resized for you.</span>
+</div>
+<div style="flex: 1 1 320px; display: flex; flex-direction: column; gap: 14px">
+<div class="field"><label for="p-name">School name (as it should appear on report cards)</label><input id="p-name" type="text" placeholder="e.g. Winneba Methodist Basic School"></div>
+<div class="field"><label for="p-motto">Motto <span style="font-weight: 400; color: #5B6472">(optional)</span></label><input id="p-motto" type="text" placeholder="e.g. Knowledge is Light"></div>
+<div class="field"><label for="p-term">Term</label><input id="p-term" type="text" placeholder="e.g. Term 1 · 2026/2027"></div>
+<label style="display: flex; align-items: center; gap: 10px; font-weight: 600; min-height: 32px"><input type="checkbox" id="p-parents-see"> Parents can see their child's report card</label>
+</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<button type="button" id="profile-save" class="btn btn-navy">Save school profile</button>
+<p id="profile-status" role="status" style="margin: 0; font-weight: 600"></p>
 </div>
 </div>
 </section>

@@ -3,26 +3,52 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ClassPulse — My child</title>
+<title>ClassPulse — my child</title>
 <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
-<style>body{margin:0;font-family:Inter,system-ui,sans-serif;background:#F6F8FB;color:#12305A}</style>
+<style>
+[hidden] { display: none !important; }
+body { margin: 0; font-family: Inter, system-ui, sans-serif; background: #F6F8FB; color: #12305A; }
+h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; margin: 0; }
+.card { background: #FFFFFF; border: 1px solid #E2E7EF; border-radius: 16px; padding: 22px; }
+.tile { flex: 1 1 170px; background: #FFFFFF; border: 1px solid #E2E7EF; border-radius: 16px; padding: 16px 18px; display: flex; flex-direction: column; gap: 4px; }
+.tile strong { font-family: 'Space Grotesk', sans-serif; font-size: 26px; }
+.kid { height: 44px; padding: 0 18px; border-radius: 999px; border: 2px solid #E2E7EF; background: #FFFFFF; color: #12305A; font-family: inherit; font-weight: 700; font-size: 14px; cursor: pointer; }
+.kid[aria-pressed="true"] { background: #12305A; border-color: #12305A; color: #FFFFFF; }
+.report { max-width: 880px; width: 100%; margin: 0 auto; background: #FFFFFF; border: 1px solid #E2E7EF; border-radius: 6px; padding: 32px; box-sizing: border-box; display: flex; flex-direction: column; gap: 22px; }
+.report table { width: 100%; min-width: 640px; border-collapse: collapse; font-size: 14px; }
+.report th { background: #12305A; color: #FFFFFF; padding: 10px 8px; font-weight: 600; }
+.report td { padding: 11px 8px; border-bottom: 1px solid #E2E7EF; text-align: center; }
+.report td:first-child, .report th:first-child { text-align: left; }
+@media print {
+  .no-print { display: none !important; }
+  body { background: #FFFFFF; }
+  .report { border: none; padding: 0; }
+  .report th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
 </head>
-<body data-role="parent">
+<body>
 <div id="page" hidden>
-<header style="background: #12305A; padding: 0 24px">
-<div style="max-width: 1200px; margin: 0 auto; min-height: 64px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; box-sizing: border-box">
-<span style="display: flex; align-items: center; gap: 10px"><img src="images/logo-mark-light.svg" alt="" width="32" height="32"><span style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 20px; color: #FFFFFF">Class<span style="color: #FFC23D">Pulse</span></span><span style="margin-left: 8px; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,0.12); color: #FFC23D; font-size: 13px; font-weight: 700">Parent</span></span>
-<div style="display: flex; align-items: center; gap: 14px; color: #FFFFFF; font-size: 14px"><span id="who"></span><button type="button" id="logout-btn" style="height: 40px; padding: 0 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.4); background: transparent; color: #FFFFFF; font-family: inherit; font-weight: 600; cursor: pointer">Log out</button></div>
+<header class="no-print" style="background: #12305A; padding: 0 24px">
+<div style="max-width: 1100px; margin: 0 auto; min-height: 64px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; box-sizing: border-box">
+<span style="display: flex; align-items: center; gap: 10px"><img src="images/logo-mark-light.svg" alt="" width="32" height="32"><span style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 20px; color: #FFFFFF">Class<span style="color: #FFC23D">Pulse</span></span><span style="margin-left: 8px; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,0.12); color: #FFC23D; font-size: 12px; font-weight: 700">Parent</span></span>
+<div id="user-box" style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; color: #FFFFFF; font-size: 14px"></div>
 </div>
 </header>
-<main style="max-width: 1200px; margin: 0 auto; padding: 40px 24px; display: flex; flex-direction: column; gap: 12px">
-<h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 32px">My child</h1>
-<p style="margin: 0; color: #157F3B; font-weight: 600">You're logged in ✓</p>
-<p style="margin: 0; color: #5B6472">Coming soon: your child's progress, attendance and report card.</p>
+<main style="max-width: 1100px; margin: 0 auto; padding: 28px 24px 48px; display: flex; flex-direction: column; gap: 20px">
+<div class="no-print" style="display: flex; align-items: center; gap: 14px">
+<img id="crest" src="images/logo-mark.svg" alt="" style="width: 56px; height: 56px; object-fit: contain">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<h1 id="school-name" style="font-size: 26px">Your child's school</h1>
+<p id="school-motto" style="margin: 0; font-size: 14px; font-style: italic; color: #5B6472"></p>
+</div>
+</div>
+<div id="kids" class="no-print" role="group" aria-label="Choose your child" style="display: flex; flex-wrap: wrap; gap: 8px"></div>
+<div id="child" style="display: flex; flex-direction: column; gap: 20px"><p style="color: #5B6472">Loading…</p></div>
 </main>
 </div>
-<script type="module" src="js/welcome.js"></script>
+<script type="module" src="js/parent.js"></script>
 </body>
 </html>

@@ -12,7 +12,7 @@ import { useSchool, schoolCol, schoolDoc } from "./school.js";
 import { LEVELS, normalizeClassName, withStream, levelOf, classOrder, groupedOptions } from "./levels.js";
 
 // Only logged-in teachers and the headmaster (and the admin) can use this page
-await useSchool("teacher", "headmaster");
+await useSchool("headmaster");
 
 const $ = (id) => document.getElementById(id);
 const classSelect = $("cl-class");

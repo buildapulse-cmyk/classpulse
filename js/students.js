@@ -7,8 +7,10 @@ import { db } from "./firebase.js";
 import { collection, getDocs, setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 import { BANDS, typeColors, average, bandOf, shortDate, ordinal, resultsFor, rank } from "./results.js";
 
-import { useSchool, schoolCol, schoolDoc, SCHOOL } from "./school.js";
+import { useSchool, schoolCol, schoolDoc, SCHOOL, isAllowed } from "./school.js";
+import { fillSubjectSelect } from "./classes.js";
 import { classOrder, groupedOptions } from "./levels.js";
+import { monthlyScores, monthBars } from "./charts.js";
 
 // Only logged-in teachers and the headmaster (and the admin) can use this page
 await useSchool("teacher", "headmaster");
@@ -36,9 +38,10 @@ async function loadData() {
       getDocs(schoolCol("classes")),
       getDocs(schoolCol("assessments"))
     ]);
-    classes = classSnap.docs.map((d) => ({ id: d.id, ...d.data() })).sort(classOrder);
+    classes = classSnap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((c) => isAllowed(c.className)).sort(classOrder);
+    fillSubjectSelect(subjectFilter, { allOption: "All subjects (whole class)" });
     assessments = assessSnap.docs.map((d) => d.data());
-    classFilter.innerHTML = '<option value="all">All my classes</option>' + groupedOptions(classes.map((c) => c.className));
+    classFilter.innerHTML = (classes.length > 1 ? '<option value="all">All my classes</option>' : "") + groupedOptions(classes.map((c) => c.className));
     // Opened from "View class →"? e.g. students.html?class=JHS%202A
     const wanted = new URLSearchParams(location.search).get("class");
     if (wanted && classes.some((c) => c.className === wanted)) classFilter.value = wanted;
@@ -153,6 +156,7 @@ function render() {
         <span style="font-size: 14px; color: #5B6472">${c.classAvg === null ? "No scores yet" : `Class average ${c.classAvg}%`}</span>
       </div>
       ${summaryHtml(c)}
+      ${monthlyHtml(c.className)}
       <div class="grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px"></div>`;
     const grid = group.querySelector(".grid");
 
@@ -163,6 +167,18 @@ function render() {
 
   countText.style.color = "#5B6472";
   countText.textContent = `Showing ${shown} student${shown === 1 ? "" : "s"}`;
+}
+
+// "Progress by month" for one class (and the chosen subject)
+function monthlyHtml(className) {
+  const list = assessments
+    .filter((a) => a.className === className)
+    .filter((a) => subjectFilter.value === "all" || a.subject === subjectFilter.value);
+  if (list.length === 0) return "";
+  return `<details style="background: #FFFFFF; border: 1px solid #E2E7EF; border-radius: 12px; padding: 0 16px" open>
+    <summary style="padding: 12px 0; font-weight: 700; cursor: pointer">Progress by month — class average</summary>
+    <div style="padding: 4px 0 16px">${monthBars(monthlyScores(list), { title: `${className} average by month`, height: 140 })}</div>
+  </details>`;
 }
 
 function summaryHtml(c) {

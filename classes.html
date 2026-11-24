@@ -3,26 +3,53 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ClassPulse — Your classes</title>
+<title>ClassPulse — my classes</title>
 <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
-<style>body{margin:0;font-family:Inter,system-ui,sans-serif;background:#F6F8FB;color:#12305A}</style>
+<style>
+[hidden] { display: none !important; }
+body { margin: 0; font-family: Inter, system-ui, sans-serif; background: #F6F8FB; color: #12305A; }
+h1, h2 { font-family: 'Space Grotesk', sans-serif; margin: 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+.cls { background: #FFFFFF; border: 2px solid #E2E7EF; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-height: 120px; }
+.cls.mine { border-color: #F2A300; box-shadow: 0 0 0 3px #FFF4D6; }
+.cls.open { border-color: #157F3B; }
+.cls.locked { background: #F3F5F8; color: #6B7686; }
+.pin-row { display: flex; gap: 8px; }
+.pin-row input { flex: 1; min-width: 0; height: 44px; padding: 0 12px; border: 1px solid #C9D2DF; border-radius: 10px; font-size: 18px; letter-spacing: 4px; font-family: inherit; }
+.btn { height: 44px; padding: 0 16px; border-radius: 10px; border: none; font-weight: 700; font-size: 14px; font-family: inherit; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+.btn-gold { background: #F2A300; color: #12305A; }
+.btn-green { background: #157F3B; color: #FFFFFF; }
+.msg { margin: 0; font-size: 13px; font-weight: 600; }
+</style>
 </head>
-<body data-role="teacher">
+<body>
 <div id="page" hidden>
 <header style="background: #12305A; padding: 0 24px">
 <div style="max-width: 1200px; margin: 0 auto; min-height: 64px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; box-sizing: border-box">
-<span style="display: flex; align-items: center; gap: 10px"><img src="images/logo-mark-light.svg" alt="" width="32" height="32"><span style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 20px; color: #FFFFFF">Class<span style="color: #FFC23D">Pulse</span></span><span style="margin-left: 8px; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,0.12); color: #FFC23D; font-size: 13px; font-weight: 700">Teacher</span></span>
-<div style="display: flex; align-items: center; gap: 14px; color: #FFFFFF; font-size: 14px"><span id="who"></span><button type="button" id="logout-btn" style="height: 40px; padding: 0 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.4); background: transparent; color: #FFFFFF; font-family: inherit; font-weight: 600; cursor: pointer">Log out</button></div>
+<span style="display: flex; align-items: center; gap: 10px"><img src="images/logo-mark-light.svg" alt="" width="32" height="32"><span style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 20px; color: #FFFFFF">Class<span style="color: #FFC23D">Pulse</span></span><span style="margin-left: 8px; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,0.12); color: #FFC23D; font-size: 12px; font-weight: 700">Teacher</span></span>
+<div id="user-box" style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; color: #FFFFFF; font-size: 14px"></div>
 </div>
 </header>
-<main style="max-width: 1200px; margin: 0 auto; padding: 40px 24px; display: flex; flex-direction: column; gap: 12px">
-<h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 32px">Your classes</h1>
-<p style="margin: 0; color: #157F3B; font-weight: 600">You're logged in ✓</p>
-<p style="margin: 0; color: #5B6472">Next step: all classes grouped as Creche, Kindergarten, Primary and JHS. You will pick your class and enter its PIN to open it.</p>
+<main style="max-width: 1200px; margin: 0 auto; padding: 32px 24px 48px; display: flex; flex-direction: column; gap: 24px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h1 style="font-size: 30px">My classes</h1>
+<p id="intro" style="margin: 0; color: #5B6472; line-height: 1.6"></p>
+</div>
+<section id="subject-box" hidden style="background: #FFFFFF; border: 2px solid #F2A300; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 10px; max-width: 520px">
+<h2 style="font-size: 18px">Open all my classes</h2>
+<p id="subject-text" style="margin: 0; color: #5B6472; font-size: 14px"></p>
+<form id="subject-form" class="pin-row">
+<label for="subject-pin" style="position: absolute; left: -9999px">Your PIN</label>
+<input id="subject-pin" type="password" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Your PIN">
+<button type="submit" class="btn btn-gold">Open</button>
+</form>
+<p id="subject-msg" class="msg" role="status"></p>
+</section>
+<div id="levels" style="display: flex; flex-direction: column; gap: 28px"><p style="color: #5B6472">Loading classes…</p></div>
 </main>
 </div>
-<script type="module" src="js/welcome.js"></script>
+<script type="module" src="js/my-classes.js"></script>
 </body>
 </html>

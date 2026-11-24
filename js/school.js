@@ -9,7 +9,18 @@ import { db } from "./firebase.js";
 import { requireRole, logOut, ROLE_NAMES } from "./auth.js";
 import { collection, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-export const SCHOOL = { id: null, name: "", me: null };
+export const SCHOOL = { id: null, name: "", me: null, allowed: null };
+
+// Teachers: the classes they have unlocked with a PIN this session (closing the browser locks them again)
+const unlockKey = (uid) => `cp-unlocked-${uid}`;
+export function unlockedClasses(uid) {
+  try { return JSON.parse(sessionStorage.getItem(unlockKey(uid)) || "[]"); } catch (e) { return []; }
+}
+export function saveUnlocked(uid, classNames) {
+  try { sessionStorage.setItem(unlockKey(uid), JSON.stringify(classNames)); } catch (e) { /* fine */ }
+}
+// May this person see this class? (headmaster and admin: every class)
+export const isAllowed = (className) => SCHOOL.allowed === null || SCHOOL.allowed.includes(className);
 
 export async function useSchool(...roles) {
   const me = await requireRole(...roles, "admin");
@@ -26,6 +37,19 @@ export async function useSchool(...roles) {
   SCHOOL.name = school.exists() ? school.data().name : "";
   SCHOOL.data = school.exists() ? school.data() : {};
   SCHOOL.me = me;
+
+  // A teacher works only in the classes they unlocked on "My classes"
+  if (me.profile.role === "teacher") {
+    SCHOOL.allowed = unlockedClasses(me.user.uid);
+    const onPicker = location.pathname.endsWith("classes.html");
+    if (!onPicker && SCHOOL.allowed.length === 0) {
+      location.replace("classes.html");
+      return new Promise(() => {});
+    }
+  } else {
+    SCHOOL.allowed = null;
+  }
+
   drawUserBox(me);
   fitMenuToRole(me.profile.role);
   return SCHOOL;
@@ -34,9 +58,16 @@ export async function useSchool(...roles) {
 // The headmaster (and admin) don't take attendance or record scores, so hide those
 // links and point the menu back to the headmaster portal instead.
 function fitMenuToRole(role) {
-  if (role !== "headmaster" && role !== "admin") return;
   const nav = document.querySelector('nav[aria-label="Main"]');
   if (!nav) return;
+  if (role === "teacher") {
+    // Teachers: a way back to choose another class; class lists are the headmaster's job
+    nav.querySelectorAll('a[href="class-lists.html"]').forEach((a) => a.remove());
+    const style = "color: #FFC23D; text-decoration: none; font-size: 14px; font-weight: 700; padding: 10px 12px; border-radius: 8px";
+    nav.insertAdjacentHTML("afterbegin", `<a href="classes.html" style="${style}">← My classes</a>`);
+    return;
+  }
+  if (role !== "headmaster" && role !== "admin") return;
   const hide = ["dashboard.html", "attendance.html", "record-scores.html", "topics.html"];
   nav.querySelectorAll("a").forEach((a) => { if (hide.includes(a.getAttribute("href"))) a.remove(); });
   const style = "color: #FFC23D; text-decoration: none; font-size: 14px; font-weight: 700; padding: 10px 12px; border-radius: 8px";

@@ -24,6 +24,8 @@ export const ROLE_NAMES = { admin: "Admin", headmaster: "Headmaster", teacher: "
 // Behind the scenes the username becomes a login like "ama.boateng@parent.classpulse.app".
 export const PARENT_DOMAIN = "parent.classpulse.app";
 export const parentLogin = (username) => `${username.trim().toLowerCase().replace(/\s+/g, ".")}@${PARENT_DOMAIN}`;
+// Firebase passwords need 6+ characters, so a parent's short PIN (e.g. 12345) gets a fixed prefix
+export const parentPassword = (pin) => `cpp-${String(pin).trim()}`;
 
 // Wait until Firebase knows whether someone is logged in, then return them and their profile
 export function whoAmI() {
@@ -101,6 +103,25 @@ export async function createLogin(email, password) {
     return user.uid;
   } finally {
     await deleteApp(temp);
+  }
+}
+
+// Like createLogin, but if the login already exists (e.g. practice data made before),
+// sign in to it with the known password and reuse it.
+export async function getOrCreateLogin(email, password) {
+  try {
+    return await createLogin(email, password);
+  } catch (error) {
+    if (error.code !== "auth/email-already-in-use") throw error;
+    const temp = initializeApp(firebaseConfig, "account-finder-" + Date.now());
+    try {
+      const tempAuth = getAuth(temp);
+      const { user } = await signInWithEmailAndPassword(tempAuth, email, password);
+      await signOut(tempAuth);
+      return user.uid;
+    } finally {
+      await deleteApp(temp);
+    }
   }
 }
 
