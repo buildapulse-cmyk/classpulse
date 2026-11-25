@@ -182,7 +182,7 @@ async function showChild(child) {
     if (!box.hidden) box.scrollIntoView({ behavior: "smooth", block: "start" });
   });
   $("dl-record").addEventListener("click", () => {
-    downloadRecords([record], settings, `${child.name} - ${child.className} - ${settings.term} - ClassPulse record`);
+    downloadRecords([record], settings, `${child.name} - ${child.className} - ${settings.term} - ClasPules record`);
   });
 }
 

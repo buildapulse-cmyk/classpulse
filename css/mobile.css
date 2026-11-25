@@ -2,7 +2,7 @@
 .menu-btn { display: none; }
 
 /* css/mobile.css
-   Phone-friendly layout for ClassPulse (screens up to 640px wide).
+   Phone-friendly layout for ClasPules (screens up to 640px wide).
    The pages use inline styles, so these phone rules use !important to take over. */
 
 @media (max-width: 640px) {

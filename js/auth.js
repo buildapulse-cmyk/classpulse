@@ -1,6 +1,6 @@
 // js/auth.js
-// Logins for ClassPulse. There are four kinds of account (roles):
-//   admin      – the owner of ClassPulse (Sam). Adds and removes schools.
+// Logins for ClasPules. There are four kinds of account (roles):
+//   admin      – the owner of ClasPules (Sam). Adds and removes schools.
 //   headmaster – runs one school. Creates teacher and parent accounts.
 //   teacher    – works with their classes in one school.
 //   parent     – sees only their own child.
@@ -73,7 +73,7 @@ export async function logIn(role, login, password) {
   let snap = await getDoc(ref);
 
   // The very first admin: the account made in the Firebase console has no profile yet.
-  // If ClassPulse has no admin on record, this person becomes the admin. After that, nobody else can.
+  // If ClasPules has no admin on record, this person becomes the admin. After that, nobody else can.
   if (!snap.exists() && role === "admin") {
     const platform = await getDoc(doc(db, "platform", "main"));
     if (!platform.exists() || !platform.data().adminUid) {
@@ -96,7 +96,7 @@ export async function logIn(role, login, password) {
   if (profile.role !== "admin") {
     const school = await getDoc(doc(db, "schools", profile.schoolId));
     if (!school.exists() || school.data().active === false) {
-      return fail("Your school's ClassPulse account is switched off. Please contact the school.");
+      return fail("Your school's ClasPules account is switched off. Please contact the school.");
     }
   }
   return profile;
@@ -142,7 +142,7 @@ export function friendlyError(error) {
   const code = error.code || "";
   if (["auth/invalid-credential", "auth/wrong-password", "auth/user-not-found", "auth/invalid-email"].includes(code))
     return "That login or password isn't right. Please check and try again.";
-  if (code === "auth/email-already-in-use") return "That email already has a ClassPulse account. Use a different email.";
+  if (code === "auth/email-already-in-use") return "That email already has a ClasPules account. Use a different email.";
   if (code === "auth/weak-password") return "The password must be at least 6 characters.";
   if (code === "auth/too-many-requests") return "Too many tries. Please wait a few minutes and try again.";
   if (code === "auth/network-request-failed") return "No internet connection. Please check and try again.";

@@ -36,7 +36,7 @@ $("records-btn").addEventListener("click", async () => {
   statusText.textContent = `Preparing records for ${cls.className}…`;
   try {
     const { records, settings: s } = await loadSchoolRecords([cls]);
-    await downloadRecords(records, s, `${cls.className} - ${s.term} - ClassPulse records`);
+    await downloadRecords(records, s, `${cls.className} - ${s.term} - ClasPules records`);
     statusText.style.color = "#157F3B";
     statusText.textContent = `Downloaded ${records.length} records for ${cls.className} ✓ Open the file and choose "Save as PDF" to keep a copy.`;
   } catch (error) {

@@ -40,7 +40,7 @@ export async function exportEverything({ termEnd = false } = {}) {
 
   // Summary sheet
   const summary = [
-    [settings.schoolName || SCHOOL.name || "ClassPulse", "", "", "", ""],
+    [settings.schoolName || SCHOOL.name || "ClasPules", "", "", "", ""],
     [`Academic year ${year.academicYear} · Term ${year.term}${termEnd ? " · END OF TERM RECORDS" : ""}`, "", "", "", ""],
     [`Downloaded ${new Date().toLocaleString("en-GB")}`, "", "", "", ""],
     [],
@@ -118,8 +118,8 @@ export async function exportEverything({ termEnd = false } = {}) {
   addSheet("Attendance", registers, [6, 12, 10, 9, 7, 8, 50]);
 
   const name = termEnd
-    ? `ClassPulse ${SCHOOL.name || "school"} ${year.academicYear.replace("/", "-")} Term ${year.term}.xlsx`
-    : `ClassPulse ${SCHOOL.name || "school"} ${new Date().toISOString().slice(0, 10)}.xlsx`;
+    ? `ClasPules ${SCHOOL.name || "school"} ${year.academicYear.replace("/", "-")} Term ${year.term}.xlsx`
+    : `ClasPules ${SCHOOL.name || "school"} ${new Date().toISOString().slice(0, 10)}.xlsx`;
   XLSX.writeFile(wb, name);
 }
 

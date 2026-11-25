@@ -321,7 +321,7 @@ document.getElementById("dlg-remove").addEventListener("click", async () => {
   try {
     const cls = classes.find((c) => c.className === s.className);
     const { records, settings } = await loadSchoolRecords([cls], new Set([s.id]));
-    await downloadRecords(records, settings, `${s.name} - ${s.className} - ClassPulse record`);
+    await downloadRecords(records, settings, `${s.name} - ${s.className} - ClasPules record`);
     status.textContent = "Removing…";
     await removeChildrenCompletely([{ id: s.id, name: s.name, className: s.className }]);
     dialog.close();

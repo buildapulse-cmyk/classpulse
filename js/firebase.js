@@ -1,5 +1,5 @@
 // js/firebase.js
-// Connects ClassPulse to the Firebase database (Firestore)
+// Connects ClasPules to the Firebase database (Firestore)
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";

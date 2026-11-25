@@ -1,6 +1,6 @@
 // js/charts.js
 // Month-by-month progress, drawn as simple bar charts with HTML and CSS (no chart library).
-// Each bar's height is set by its value; colours follow the ClassPulse bands.
+// Each bar's height is set by its value; colours follow the ClasPules bands.
 
 import { average, bandOf, BANDS } from "./results.js";
 

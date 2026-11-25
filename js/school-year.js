@@ -1,7 +1,7 @@
 // js/school-year.js
 // The headmaster's "School year" tab. Records are cleared TERM BY TERM to save space:
 //   1. Download the term's records (Excel) and keep the file safe.
-//   2. End the term: ClassPulse keeps a short summary of the term (each student's result,
+//   2. End the term: ClasPules keeps a short summary of the term (each student's result,
 //      position and attendance, and each class's subject averages). This summary REPLACES
 //      the previous term's summary. All scores and registers of the term are cleared.
 //      Students, classes, PINs, teachers, parents and topics all stay.
@@ -138,7 +138,7 @@ on("records-all", "click", async () => {
   say("records-status", "Preparing every child's record…", "#12305A");
   try {
     const { records, settings } = await loadSchoolRecords(state.classes.slice().sort(classOrder));
-    await downloadRecords(records, settings, `All records - ${settings.term} - ClassPulse`);
+    await downloadRecords(records, settings, `All records - ${settings.term} - ClasPules`);
     say("records-status", `Downloaded ${records.length} records ✓`, "#157F3B");
   } catch (error) {
     say("records-status", "Could not make the records: " + error.message, "#B42318");
@@ -293,7 +293,7 @@ on("new-year-btn", "click", async () => {
     if (leavers.length) {
       progress("Downloading the records of students who are leaving…");
       const { records, settings } = await loadSchoolRecords(state.classes, new Set(leavers.map((l) => l.id)));
-      await downloadRecords(records, settings, `Leavers ${state.year.academicYear.replace("/", "-")} - ClassPulse records`);
+      await downloadRecords(records, settings, `Leavers ${state.year.academicYear.replace("/", "-")} - ClasPules records`);
     }
     await endTerm(progress, new Set(leavers.map((l) => l.id)));
     progress("Moving students to their new classes…");

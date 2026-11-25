@@ -275,7 +275,7 @@ async function removeStudent(id) {
   try {
     const cls = { className, students: classes[className].students };
     const { records, settings } = await loadSchoolRecords([cls], new Set([id]));
-    await downloadRecords(records, settings, `${student.name} - ${className} - ClassPulse record`);
+    await downloadRecords(records, settings, `${student.name} - ${className} - ClasPules record`);
     say("list-status", "Removing…", "#12305A");
     await removeChildrenCompletely([{ id, name: student.name, className }]);
     await loadAll(className);

@@ -47,7 +47,7 @@ function recordPages(rec, settings, schoolName) {
       <span>${days.length ? `Present ${count("P")} · Late ${count("L")} · Absent ${count("A")} — out of ${days.length} school days` : "Not recorded this term."}</span>
       ${absent.length ? `<span style="font-size: 13px; color: #5B6472">${absent.map((d) => `${shortDate(d.date)} (${MARKS[d.mark]})`).join(" · ")}</span>` : ""}
     </div>
-    <p style="margin: 0; font-size: 12px; color: #5B6472">Downloaded from ClassPulse on ${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}. Keep this record safe.</p>
+    <p style="margin: 0; font-size: 12px; color: #5B6472">Downloaded from ClasPules on ${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}. Keep this record safe.</p>
   </article>`;
 }
 
@@ -82,7 +82,7 @@ ${body}
 </main></body></html>`;
 }
 
-// The ClassPulse logo is put inside the file, so the record looks right even offline
+// The ClasPules logo is put inside the file, so the record looks right even offline
 let logoData = null;
 async function logoInside() {
   if (logoData) return logoData;
