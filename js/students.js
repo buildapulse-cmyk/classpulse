@@ -11,6 +11,7 @@ import { useSchool, schoolCol, schoolDoc, SCHOOL, isAllowed } from "./school.js"
 import { fillSubjectSelect } from "./classes.js";
 import { classOrder, groupedOptions } from "./levels.js";
 import { monthlyScores, monthBars } from "./charts.js";
+import { loadSchoolRecords, downloadRecords, removeChildrenCompletely } from "./child-record.js";
 
 // Only logged-in teachers and the headmaster (and the admin) can use this page
 await useSchool("teacher", "headmaster");
@@ -307,24 +308,26 @@ searchBox.addEventListener("input", render);
 document.getElementById("filters").addEventListener("submit", (e) => e.preventDefault());
 
 // ---------- Remove a student from the school (headmaster) ----------
-// Their scores stay saved; they just leave the class list. Their ID is never reused.
+// First their full record is downloaded for the school to keep, then everything about them is
+// removed: scores, registers, the parents' view, and their parent's login and PIN (unless that
+// parent has another child in the school). Their ID is never reused.
 document.getElementById("dlg-remove").addEventListener("click", async () => {
   const s = openStudentNow;
   if (!s) return;
-  if (!confirm(`Remove ${s.name} (${s.className}) from the school?\n\nThey will no longer appear in any class, ranking or report card. Their past scores stay saved.`)) return;
+  if (!confirm(`Remove ${s.name} (${s.className}) from the school?\n\n1. Their full record (report card, every assessment and attendance) downloads for you to keep.\n2. Then ALL their information is removed: scores, registers, and their parent's login and PIN (unless the parent has another child here).\n\nThis can't be undone.`)) return;
   const status = document.getElementById("dlg-remove-status");
   status.style.color = "#12305A";
-  status.textContent = "Removing…";
+  status.textContent = "Downloading their record…";
   try {
     const cls = classes.find((c) => c.className === s.className);
-    const roster = (cls.students || []).filter((x) => x.id !== s.id);
-    const removedIds = [...(cls.removedIds || []), s.id];
-    await setDoc(schoolDoc("classes", cls.id), { students: roster, removedIds, updatedAt: serverTimestamp() }, { merge: true });
-    await deleteDoc(schoolDoc("students", s.id));
+    const { records, settings } = await loadSchoolRecords([cls], new Set([s.id]));
+    await downloadRecords(records, settings, `${s.name} - ${s.className} - ClassPulse record`);
+    status.textContent = "Removing…";
+    await removeChildrenCompletely([{ id: s.id, name: s.name, className: s.className }]);
     dialog.close();
     await loadData();
     countText.style.color = "#157F3B";
-    countText.textContent = `${s.name} was removed from the school.`;
+    countText.textContent = `${s.name} was removed from the school. Their record was downloaded — keep it safe.`;
   } catch (error) {
     status.style.color = "#B42318";
     status.textContent = "Could not remove: " + error.message;

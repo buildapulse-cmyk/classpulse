@@ -1,0 +1,123 @@
+rules_version = '2';
+
+// ClassPulse database rules
+// Admin (Sam): everything. Headmaster: their own school, including PINs and accounts.
+// Teacher: their school's classes, scores, attendance and topics (no PINs, no accounts).
+// Parent: only their own child's private summary, and the school's name/crest.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Who is asking? ----------
+    function signedIn() { return request.auth != null; }
+    function myDoc() { return /databases/$(database)/documents/users/$(request.auth.uid); }
+    function hasProfile() { return signedIn() && exists(myDoc()); }
+    function me() { return get(myDoc()).data; }
+    function active() { return hasProfile() && me().get('active', true) != false; }
+    function isAdmin() { return active() && me().role == 'admin'; }
+    function inSchool(s) { return active() && me().get('schoolId', '') == s; }
+    function isHead(s) { return inSchool(s) && me().role == 'headmaster'; }
+    function isStaff(s) { return inSchool(s) && me().role in ['headmaster', 'teacher']; }
+    function isParentOf(s, studentId) {
+      return inSchool(s) && me().role == 'parent' && studentId in me().get('childIds', []);
+    }
+
+    // ---------- ClassPulse itself ----------
+    match /platform/{docId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    // ---------- Parent logins after a PIN reset ----------
+    // Holds only a version number, so the login page can find a parent's current login.
+    // Only the headmaster of that school (or the admin) can change it.
+    match /parentLogins/{username} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if isAdmin() || isHead(request.resource.data.schoolId);
+      allow update: if isAdmin()
+        || (isHead(resource.data.schoolId) && request.resource.data.schoolId == resource.data.schoolId);
+      allow delete: if isAdmin() || isHead(resource.data.schoolId);
+    }
+
+    // ---------- Accounts ----------
+    match /users/{uid} {
+      // Everyone can read their own profile; the headmaster can read their school's teachers and parents
+      allow get: if signedIn() && (request.auth.uid == uid || isAdmin() || isHead(resource.data.schoolId));
+      allow list: if isAdmin() || isHead(resource.data.schoolId);
+
+      // Create: the admin; the very first admin (only while ClassPulse has no admin);
+      // a headmaster creating teachers or parents in their own school
+      allow create: if isAdmin()
+        || (signedIn() && request.auth.uid == uid
+            && request.resource.data.role == 'admin'
+            && !exists(/databases/$(database)/documents/platform/main))
+        || (request.resource.data.role in ['teacher', 'parent']
+            && isHead(request.resource.data.schoolId));
+
+      // Change: the admin; a headmaster changing their own school's teachers and parents
+      // (they cannot change anyone's role or move them to another school). Nobody edits their own account.
+      allow update: if isAdmin()
+        || (resource.data.role in ['teacher', 'parent']
+            && isHead(resource.data.schoolId)
+            && request.resource.data.role == resource.data.role
+            && request.resource.data.schoolId == resource.data.schoolId);
+
+      // Delete: the admin; a headmaster removing a parent whose children have all left the school
+      allow delete: if isAdmin()
+        || (resource.data.role == 'parent' && isHead(resource.data.schoolId));
+    }
+
+    // ---------- Schools ----------
+    match /schools/{schoolId} {
+      allow read: if isAdmin() || inSchool(schoolId);
+      allow write: if isAdmin();
+
+      // Each child's private summary: staff, and ONLY that child's parent
+      match /childViews/{studentId} {
+        allow read: if isAdmin() || isStaff(schoolId) || isParentOf(schoolId, studentId);
+        allow write: if isAdmin() || isHead(schoolId);
+      }
+
+      // Last term's short summary (results and attendance): staff read, headmaster changes
+      match /archive/{docId} {
+        allow read: if isAdmin() || isStaff(schoolId);
+        allow write: if isAdmin() || isHead(schoolId);
+      }
+
+      // PINs and other private school records: headmaster and admin only
+      match /private/{docId} {
+        allow read, write: if isAdmin() || isHead(schoolId);
+      }
+
+      // Report settings, targets, school profile: everyone in the school can read; headmaster changes
+      match /settings/{docId} {
+        allow read: if isAdmin() || inSchool(schoolId);
+        allow write: if isAdmin() || isHead(schoolId);
+      }
+
+      // Classes (class lists, class PINs, class teachers) and students: headmaster changes
+      match /classes/{classId} {
+        allow read: if isAdmin() || isStaff(schoolId);
+        allow write: if isAdmin() || isHead(schoolId);
+      }
+      match /students/{studentId} {
+        allow read: if isAdmin() || isStaff(schoolId);
+        allow write: if isAdmin() || isHead(schoolId);
+      }
+
+      // Day-to-day records: teachers and the headmaster
+      match /assessments/{docId} {
+        allow read, write: if isAdmin() || isStaff(schoolId);
+      }
+      match /attendance/{docId} {
+        allow read, write: if isAdmin() || isStaff(schoolId);
+      }
+      match /topics/{docId} {
+        allow read, write: if isAdmin() || isStaff(schoolId);
+      }
+    }
+
+    // Anything not listed above is closed to everyone
+  }
+}

@@ -3,7 +3,7 @@
 
 import { db } from "./firebase.js";
 import {
-  doc, getDoc, setDoc, serverTimestamp
+  doc, getDoc, setDoc, deleteDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 import { fillClassSelect } from "./classes.js";
 
@@ -17,6 +17,7 @@ const dateInput = document.getElementById("att-date");
 const list = document.getElementById("student-list");
 const saveBtn = document.getElementById("save-btn");
 const saveStatus = document.getElementById("save-status");
+const deleteBtn = document.getElementById("delete-btn");
 
 let students = [];   // [{ id, name }]
 let marks = {};      // { studentId: "P" | "A" | "L" }
@@ -49,8 +50,9 @@ async function loadClass() {
     students = classDoc.exists() ? classDoc.data().students : [];
 
     const saved = await getDoc(schoolDoc("attendance", attendanceId()));
-    marks = saved.exists() ? saved.data().records : {};
-    if (saved.exists()) showStatus("Showing attendance already saved for this day.", "#1E5AA8");
+    marks = saved.exists() ? { ...saved.data().records } : {};
+    deleteBtn.hidden = !saved.exists();
+    if (saved.exists()) showStatus("Already saved for this day. To fix a mistake, change anyone and save again.", "#1E5AA8");
 
     drawList();
   } catch (error) {
@@ -128,10 +130,28 @@ saveBtn.addEventListener("click", async () => {
       savedAt: serverTimestamp()
     });
     showStatus("Attendance saved ✓", "#157F3B");
+    deleteBtn.hidden = false;
   } catch (error) {
     showStatus("Could not save: " + error.message, "#B42318");
   } finally {
     saveBtn.disabled = false;
+  }
+});
+
+// A register taken by mistake (wrong day or wrong class) can be removed completely
+deleteBtn.addEventListener("click", async () => {
+  if (!confirm(`Delete the ${classSelect.value} register for ${dateInput.value}?\n\nUse this only if it was taken by mistake (wrong day or wrong class).`)) return;
+  deleteBtn.disabled = true;
+  try {
+    await deleteDoc(schoolDoc("attendance", attendanceId()));
+    marks = {};
+    deleteBtn.hidden = true;
+    updateButtons();
+    showStatus("Register deleted ✓", "#157F3B");
+  } catch (error) {
+    showStatus("Could not delete: " + error.message, "#B42318");
+  } finally {
+    deleteBtn.disabled = false;
   }
 });
 

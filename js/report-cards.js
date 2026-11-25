@@ -12,6 +12,7 @@ import { withDefaults, sortedGrades, gradeFor, buildClassReports, remarkFor, rep
 
 import { useSchool, schoolCol, schoolDoc, SCHOOL } from "./school.js";
 import { classOrder, groupedOptions } from "./levels.js";
+import { loadSchoolRecords, downloadRecords } from "./child-record.js";
 
 // Report cards are the headmaster's job (and the admin's)
 await useSchool("headmaster");
@@ -26,6 +27,25 @@ let settings = withDefaults();
 let classes = [];
 let assessments = [];
 let attendance = [];
+
+// ---------- Records to keep: each child's report card + every assessment, for the whole class ----------
+$("records-btn").addEventListener("click", async () => {
+  const cls = currentClass();
+  $("records-btn").disabled = true;
+  statusText.style.color = "#12305A";
+  statusText.textContent = `Preparing records for ${cls.className}…`;
+  try {
+    const { records, settings: s } = await loadSchoolRecords([cls]);
+    await downloadRecords(records, s, `${cls.className} - ${s.term} - ClassPulse records`);
+    statusText.style.color = "#157F3B";
+    statusText.textContent = `Downloaded ${records.length} records for ${cls.className} ✓ Open the file and choose "Save as PDF" to keep a copy.`;
+  } catch (error) {
+    statusText.style.color = "#B42318";
+    statusText.textContent = "Could not make the records: " + error.message;
+  } finally {
+    $("records-btn").disabled = false;
+  }
+});
 
 // ---------- Load ----------
 async function load() {

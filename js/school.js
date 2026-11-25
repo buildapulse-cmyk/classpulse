@@ -52,7 +52,36 @@ export async function useSchool(...roles) {
 
   drawUserBox(me);
   fitMenuToRole(me.profile.role);
+  addMenuButton();
   return SCHOOL;
+}
+
+// On phones the menu folds into a ☰ button (see css/mobile.css)
+function addMenuButton() {
+  const nav = document.querySelector('nav[aria-label="Main"]');
+  const header = nav && nav.closest("header");
+  if (!header || header.querySelector(".menu-btn")) return;
+  nav.id = nav.id || "main-menu";
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "menu-btn";
+  btn.setAttribute("aria-controls", nav.id);
+  btn.setAttribute("aria-expanded", "false");
+  btn.setAttribute("aria-label", "Open menu");
+  btn.style.cssText = "width: 44px; height: 44px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.4); background: transparent; color: #FFFFFF; align-items: center; justify-content: center; cursor: pointer";
+  const icon = (open) => open
+    ? '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>'
+    : '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>';
+  btn.innerHTML = icon(false);
+  const set = (open) => {
+    header.classList.toggle("menu-open", open);
+    btn.setAttribute("aria-expanded", open);
+    btn.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+    btn.innerHTML = icon(open);
+  };
+  btn.addEventListener("click", () => set(!header.classList.contains("menu-open")));
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && header.classList.contains("menu-open")) { set(false); btn.focus(); } });
+  nav.parentElement.appendChild(btn);
 }
 
 // The headmaster (and admin) don't take attendance or record scores, so hide those

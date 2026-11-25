@@ -3,8 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="ClassPulse headmaster portal: school overview, teachers, parents, class PINs, weekly targets and reports.">
 <title>ClassPulse — headmaster</title>
 <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/mobile.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
 <style>
@@ -80,6 +82,7 @@ input[type="text"], input[type="email"], input[type="number"], input[type="date"
 <button type="button" class="tab" role="tab" id="tab-pins" aria-controls="panel-pins" aria-selected="false">Class PINs</button>
 <button type="button" class="tab" role="tab" id="tab-targets" aria-controls="panel-targets" aria-selected="false">Weekly targets</button>
 <button type="button" class="tab" role="tab" id="tab-profile" aria-controls="panel-profile" aria-selected="false">School profile</button>
+<button type="button" class="tab" role="tab" id="tab-year" aria-controls="panel-year" aria-selected="false">School year</button>
 </div>
 
 <!-- Overview -->
@@ -88,6 +91,7 @@ input[type="text"], input[type="email"], input[type="number"], input[type="date"
 <button type="button" class="quick-btn" data-go="teachers"><span class="q-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"></circle><path d="M3 21v-1a6 6 0 0 1 12 0v1"></path><path d="M19 8v6"></path><path d="M16 11h6"></path></svg></span><span><strong>Add a teacher</strong><br><small>Email, password, class or subjects</small></span></button>
 <button type="button" class="quick-btn" data-go="pins"><span class="q-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg></span><span><strong>Class PINs</strong><br><small>Set the PIN for each class</small></span></button>
 <button type="button" class="quick-btn" data-go="targets"><span class="q-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="5"></circle><circle cx="12" cy="12" r="1"></circle></svg></span><span><strong>Weekly targets</strong><br><small>Topics, exercises, tests</small></span></button>
+<button type="button" class="quick-btn" data-go="year"><span class="q-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4"></path><path d="M8 3v4"></path><path d="M3 10h18"></path><path d="M12 14v4"></path><path d="M10 16l2-2 2 2"></path></svg></span><span><strong>End term / new year</strong><br><small>Clear the term, promotion</small></span></button>
 <a class="quick-btn" href="class-lists.html"><span class="q-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"></path><path d="M7 9l5-5 5 5"></path><path d="M4 20h16"></path></svg></span><span><strong>Upload students</strong><br><small>Class lists from Excel</small></span></a>
 </div>
 <div id="tiles" style="display: flex; flex-wrap: wrap; gap: 16px"></div>
@@ -179,6 +183,10 @@ input[type="text"], input[type="email"], input[type="number"], input[type="date"
 <h2 style="font-size: 20px">Add a parent</h2>
 <p style="margin: 0; color: #5B6472; font-size: 14px">Parents log in with a username and PIN — no email needed. They only ever see their own child.</p>
 </div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 14px; background: #F6F8FB; border-radius: 10px">
+<span id="views-status" style="flex: 1 1 260px; font-size: 14px; color: #5B6472">Parents' view: checking…</span>
+<button type="button" id="views-refresh" class="btn btn-line">Update parents' view now</button>
+</div>
 <form id="parent-form" style="display: flex; flex-direction: column; gap: 16px" novalidate>
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; align-items: end">
 <div class="field"><label for="pa-name">Parent's name</label><input id="pa-name" type="text" placeholder="e.g. Mrs. Comfort Boateng"></div>
@@ -264,13 +272,67 @@ input[type="text"], input[type="email"], input[type="number"], input[type="date"
 <div class="field"><label for="p-name">School name (as it should appear on report cards)</label><input id="p-name" type="text" placeholder="e.g. Winneba Methodist Basic School"></div>
 <div class="field"><label for="p-motto">Motto <span style="font-weight: 400; color: #5B6472">(optional)</span></label><input id="p-motto" type="text" placeholder="e.g. Knowledge is Light"></div>
 <div class="field"><label for="p-term">Term</label><input id="p-term" type="text" placeholder="e.g. Term 1 · 2026/2027"></div>
-<label style="display: flex; align-items: center; gap: 10px; font-weight: 600; min-height: 32px"><input type="checkbox" id="p-parents-see"> Parents can see their child's report card</label>
 </div>
 </div>
 <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
 <button type="button" id="profile-save" class="btn btn-navy">Save school profile</button>
 <p id="profile-status" role="status" style="margin: 0; font-weight: 600"></p>
 </div>
+</div>
+</section>
+<!-- School year -->
+<section id="panel-year" role="tabpanel" aria-labelledby="tab-year" hidden style="display: flex; flex-direction: column; gap: 16px">
+<div id="year-now" class="card" style="display: flex; flex-direction: column; gap: 4px"></div>
+
+<div class="card" style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="font-size: 20px">End of term</h2>
+<p style="margin: 0; color: #5B6472; line-height: 1.6">To save space, scores and registers are cleared at the end of every term. ClassPulse keeps a <strong>short summary</strong> of the term (each student's result, position and attendance, and subject averages). The next term's summary replaces it. Students, classes, PINs, teachers, parents and topics always stay.</p>
+<p id="year-end-note" hidden class="need need-gold" style="margin: 0"><span aria-hidden="true" style="font-weight: 800">!</span><span>The term's final exams have started. When report cards are done, download the term's records, then end the term.</span></p>
+<h3 id="dl-title" style="font-size: 16px; margin-top: 6px">Step 1 · Download the term's records</h3>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<button type="button" id="year-download" class="btn" style="background: #157F3B; color: #FFFFFF">Download the term (Excel)</button>
+<p id="year-dl-status" role="status" style="margin: 0; font-weight: 600"></p>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<button type="button" id="records-all" class="btn btn-line" style="height: 46px">Download every child's record (report card + assessments)</button>
+<p id="records-status" role="status" style="margin: 0; font-weight: 600"></p>
+</div>
+<label style="display: flex; align-items: center; gap: 10px; font-weight: 600; min-height: 32px"><input type="checkbox" id="year-kept" disabled> I have downloaded the Excel file and kept it safe</label>
+</div>
+
+<div id="term-card" class="card" style="display: flex; flex-direction: column; gap: 14px">
+<h2 id="next-term-title" style="font-size: 20px">Step 2 · Start the next term</h2>
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px">
+<div class="field" style="flex: 0 1 240px"><label for="next-term-date">New term starts</label><input id="next-term-date" type="date"></div>
+<button type="button" id="next-term-btn" class="btn btn-navy" disabled>Start next term</button>
+</div>
+<p id="next-term-hint" style="margin: 0; font-size: 13px; color: #5B6472"></p>
+<p id="term-status" role="status" style="margin: 0; font-weight: 600"></p>
+</div>
+
+<div id="year-card" hidden class="card" style="display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<h2 style="font-size: 20px">Step 2 · Promotion list</h2>
+<p style="margin: 0; font-size: 14px; color: #5B6472">Everyone is promoted unless you choose <strong>Repeat</strong>. Open a class to change a student. JHS 3 students who finish leave the school: their records download for you first, then all their information (and their parent's login and PIN) is removed.</p>
+<div id="promo-list" style="display: flex; flex-direction: column; gap: 8px"></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="font-size: 20px">Step 3 · Start the new academic year</h2>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 260px)); gap: 12px">
+<div class="field"><label for="new-year-label">New academic year</label><input id="new-year-label" type="text" placeholder="e.g. 2027/2028"></div>
+<div class="field"><label for="new-year-date">Term 1 starts</label><input id="new-year-date" type="date"></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<button type="button" id="new-year-btn" class="btn btn-gold" disabled>Start new academic year</button>
+<p id="new-year-status" role="status" style="margin: 0; font-weight: 600"></p>
+</div>
+<p id="new-year-hint" style="margin: 0; font-size: 13px; color: #5B6472"></p>
+</div>
+</div>
+
+<div class="card" style="display: flex; flex-direction: column; gap: 14px">
+<h2 id="summary-title" style="font-size: 20px">Last term's summary</h2>
+<div id="past-years" style="display: flex; flex-direction: column; gap: 10px"><p style="margin: 0; color: #5B6472">Loading…</p></div>
 </div>
 </section>
 </main>

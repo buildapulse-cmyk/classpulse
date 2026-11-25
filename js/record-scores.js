@@ -4,7 +4,7 @@
 
 import { db } from "./firebase.js";
 import {
-  collection, addDoc, doc, getDoc, query, where, getDocs, serverTimestamp
+  collection, addDoc, updateDoc, deleteDoc, doc, getDoc, query, where, getDocs, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 import { fillClassSelect, fillSubjectSelect } from "./classes.js";
 
@@ -25,6 +25,11 @@ const saveStatus = document.getElementById("save-status");
 
 let students = [];       // [{ id, name }]
 let currentType = null;  // the selected type button
+let editing = null;      // the saved record being fixed, or null when adding new scores
+let recent = [];         // recently saved records for this class and subject
+const cancelBtn = document.getElementById("cancel-edit");
+const recentList = document.getElementById("recent-list");
+const recentStatus = document.getElementById("recent-status");
 
 // Turns "JHS 2A" into "jhs-2a"
 const makeId = (text) => text.toLowerCase().replace(/[^a-z0-9]+/g, "-");
@@ -71,6 +76,7 @@ function updateLabels() {
   document.querySelectorAll(".type-name").forEach((s) => (s.textContent = currentType.dataset.label));
   document.querySelectorAll(".topic-name").forEach((s) => (s.textContent = topicName()));
   document.getElementById("class-name").textContent = classSelect.value;
+  document.querySelectorAll(".class-subject").forEach((s) => (s.textContent = `${classSelect.value} ${subjectSelect.value}`));
 }
 
 // Choosing a type sets a usual "marked out of" (the teacher can change it)
@@ -105,9 +111,18 @@ function drawList() {
   list.innerHTML = students.map((s) => `
     <div style="display: flex; align-items: center; gap: 16px; padding: 10px 0; border-bottom: 1px solid #EEF1F6">
       <label for="score-${s.id}" style="flex: 1; font-weight: 500">${s.name}</label>
-      <input id="score-${s.id}" class="score-input" data-id="${s.id}" type="number" min="0" step="0.5" inputmode="decimal"
+      <input id="score-${s.id}" class="score-input" data-id="${s.id}" type="number" min="0" step="0.5" inputmode="decimal" enterkeyhint="next"
         style="width: 96px; height: 44px; padding: 0 12px; border: 1px solid #C9D2DF; border-radius: 10px; font-size: 15px; font-family: inherit; text-align: right; box-sizing: border-box">
     </div>`).join("");
+
+  // On a phone keyboard, "Next" (or Enter) jumps to the next student's box
+  const boxes = [...list.querySelectorAll(".score-input")];
+  boxes.forEach((box, i) => box.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    if (boxes[i + 1]) boxes[i + 1].focus(); else box.blur();
+  }));
+  if (boxes.length) boxes[boxes.length - 1].setAttribute("enterkeyhint", "done");
 }
 
 saveBtn.addEventListener("click", async () => {
@@ -152,10 +167,10 @@ saveBtn.addEventListener("click", async () => {
   saveBtn.disabled = true;
   showStatus("Saving…", "#12305A");
   try {
-    await addDoc(schoolCol("assessments"), {
+    const record = {
       className: classSelect.value,
       subject: subjectSelect.value,
-      topicId: topicSelect.value,
+      topicId: topicSelect.value === "none" ? null : topicSelect.value,
       topic: topicName(),
       type: currentType.dataset.type,        // ex, hw, ct or exam
       typeLabel: currentType.dataset.label,  // Class exercise, Homework, ...
@@ -165,9 +180,17 @@ saveBtn.addEventListener("click", async () => {
       recorded,
       averagePercent,
       savedAt: serverTimestamp()
-    });
-    showStatus(`Saved ✓ ${recorded} scores · class average ${averagePercent}%`, "#157F3B");
+    };
+    if (editing) {
+      await updateDoc(schoolDoc("assessments", editing.id), { ...record, fixedAt: serverTimestamp() });
+      stopEditing();
+      showStatus(`Changes saved ✓ ${recorded} scores · class average ${averagePercent}%`, "#157F3B");
+    } else {
+      await addDoc(schoolCol("assessments"), record);
+      showStatus(`Saved ✓ ${recorded} scores · class average ${averagePercent}%`, "#157F3B");
+    }
     list.querySelectorAll(".score-input").forEach((i) => (i.value = ""));
+    loadRecent();
   } catch (error) {
     showStatus("Could not save: " + error.message, "#B42318");
   } finally {
@@ -175,12 +198,100 @@ saveBtn.addEventListener("click", async () => {
   }
 });
 
+// ---------- Fixing or deleting saved scores ----------
+const fmtDate = (iso) => new Date(iso + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+
+async function loadRecent() {
+  if (!classSelect.value) return;
+  recentList.innerHTML = '<p style="color: #5B6472">Loading…</p>';
+  try {
+    const snap = await getDocs(query(schoolCol("assessments"),
+      where("className", "==", classSelect.value), where("subject", "==", subjectSelect.value)));
+    recent = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8);
+    drawRecent();
+  } catch (error) {
+    recentList.innerHTML = `<p style="color: #B42318">Could not load saved scores: ${error.message}</p>`;
+  }
+}
+
+function drawRecent() {
+  if (recent.length === 0) {
+    recentList.innerHTML = '<p style="margin: 0; color: #5B6472">Nothing saved yet for this class and subject.</p>';
+    return;
+  }
+  recentList.innerHTML = recent.map((a) => `
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 10px 0; border-bottom: 1px solid #EEF1F6${editing && editing.id === a.id ? "; background: #FFF4D6" : ""}">
+      <span style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 2px">
+        <strong>${a.typeLabel}${a.topic ? ` · ${a.topic}` : ""}</strong>
+        <span style="font-size: 13px; color: #5B6472">${fmtDate(a.date)} · ${a.recorded} score${a.recorded === 1 ? "" : "s"} · out of ${a.maxScore} · class average ${a.averagePercent}%</span>
+      </span>
+      <span style="display: flex; gap: 8px">
+        <button type="button" data-fix="${a.id}" style="height: 40px; padding: 0 16px; border-radius: 8px; background: #12305A; color: #FFFFFF; border: none; font-weight: 600; font-size: 13px; font-family: inherit; cursor: pointer">Fix</button>
+        <button type="button" data-del="${a.id}" style="height: 40px; padding: 0 16px; border-radius: 8px; background: #FFFFFF; color: #8F1D15; border: 1px solid #F1B8B3; font-weight: 600; font-size: 13px; font-family: inherit; cursor: pointer">Delete</button>
+      </span>
+    </div>`).join("");
+  recentList.querySelectorAll("[data-fix]").forEach((b) => b.addEventListener("click", () => startEditing(b.dataset.fix)));
+  recentList.querySelectorAll("[data-del]").forEach((b) => b.addEventListener("click", () => deleteRecord(b.dataset.del)));
+}
+
+// Put a saved record back into the form so the teacher can correct it
+function startEditing(id) {
+  const a = recent.find((x) => x.id === id);
+  if (!a) return;
+  editing = a;
+  const btn = [...typeButtons].find((b) => b.dataset.type === a.type) || typeButtons[0];
+  pickType(btn);
+  maxInput.value = a.maxScore;
+  dateInput.value = a.date;
+  const value = a.topicId || "none";
+  if (![...topicSelect.options].some((o) => o.value === value)) {
+    topicSelect.insertAdjacentHTML("afterbegin", `<option value="${value}" data-name="${a.topic || ""}">${a.topic || "No topic (exam)"}</option>`);
+  }
+  topicSelect.value = value;
+  list.querySelectorAll(".score-input").forEach((i) => (i.value = a.scores[i.dataset.id] ?? ""));
+  updateLabels();
+  saveBtn.textContent = "Save changes";
+  cancelBtn.hidden = false;
+  showStatus(`Fixing: ${a.typeLabel}, ${fmtDate(a.date)}. Change the scores, then click Save changes.`, "#8A5A00");
+  drawRecent();
+  document.querySelector("h1").scrollIntoView({ behavior: "smooth" });
+}
+
+function stopEditing() {
+  editing = null;
+  saveBtn.textContent = "Save scores";
+  cancelBtn.hidden = true;
+  dateInput.value = new Date().toISOString().slice(0, 10);
+  drawRecent();
+}
+cancelBtn.addEventListener("click", () => {
+  stopEditing();
+  list.querySelectorAll(".score-input").forEach((i) => (i.value = ""));
+  showStatus("", "");
+});
+
+async function deleteRecord(id) {
+  const a = recent.find((x) => x.id === id);
+  if (!a || !confirm(`Delete this ${a.typeLabel.toLowerCase()} (${fmtDate(a.date)}, ${a.recorded} scores)?\n\nIt will be removed from every report and chart. This can't be undone.`)) return;
+  try {
+    await deleteDoc(schoolDoc("assessments", id));
+    if (editing && editing.id === id) stopEditing();
+    recentStatus.style.color = "#157F3B";
+    recentStatus.textContent = "Deleted ✓";
+    loadRecent();
+  } catch (error) {
+    recentStatus.style.color = "#B42318";
+    recentStatus.textContent = "Could not delete: " + error.message;
+  }
+}
+
 typeButtons.forEach((b) => b.addEventListener("click", () => pickType(b)));
 maxInput.addEventListener("input", updateLabels);
 topicSelect.addEventListener("change", updateLabels);
-classSelect.addEventListener("change", () => { loadClass(); loadTopics(); });
-subjectSelect.addEventListener("change", loadTopics);
+classSelect.addEventListener("change", () => { if (editing) stopEditing(); loadClass(); loadTopics(); loadRecent(); });
+subjectSelect.addEventListener("change", () => { if (editing) stopEditing(); loadTopics(); loadRecent(); });
 
 pickType(typeButtons[0]);
 fillSubjectSelect(subjectSelect);
-fillClassSelect(classSelect).then(() => { loadClass(); loadTopics(); });
+fillClassSelect(classSelect).then(() => { loadClass(); loadTopics(); loadRecent(); });

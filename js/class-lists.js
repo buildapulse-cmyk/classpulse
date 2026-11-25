@@ -9,6 +9,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 import { useSchool, schoolCol, schoolDoc } from "./school.js";
+import { loadSchoolRecords, downloadRecords, removeChildrenCompletely } from "./child-record.js";
 import { LEVELS, normalizeClassName, withStream, levelOf, classOrder, groupedOptions } from "./levels.js";
 
 // Only logged-in teachers and the headmaster (and the admin) can use this page
@@ -268,16 +269,17 @@ function drawList() {
 async function removeStudent(id) {
   const className = classSelect.value;
   const student = classes[className].students.find((s) => s.id === id);
-  if (!confirm(`Remove ${student.name} from ${className}?\n\nTheir scores already recorded stay saved, but they won't appear in this class any more.`)) return;
+  if (!confirm(`Remove ${student.name} from the school?\n\n1. Their full record (report card, every assessment and attendance) downloads for you to keep.\n2. Then ALL their information is removed: scores, registers, and their parent's login and PIN (unless the parent has another child here).\n\nThis can't be undone.`)) return;
 
-  say("list-status", "Removing…", "#12305A");
+  say("list-status", "Downloading their record…", "#12305A");
   try {
-    const roster = classes[className].students.filter((s) => s.id !== id);
-    const removedIds = [...classes[className].removedIds, id];
-    await setDoc(schoolDoc("classes", makeId(className)), { className, students: roster, removedIds, updatedAt: serverTimestamp() }, { merge: true });
-    await deleteDoc(schoolDoc("students", id));
+    const cls = { className, students: classes[className].students };
+    const { records, settings } = await loadSchoolRecords([cls], new Set([id]));
+    await downloadRecords(records, settings, `${student.name} - ${className} - ClassPulse record`);
+    say("list-status", "Removing…", "#12305A");
+    await removeChildrenCompletely([{ id, name: student.name, className }]);
     await loadAll(className);
-    say("list-status", `${student.name} removed.`, "#157F3B");
+    say("list-status", `${student.name} removed. Their record was downloaded — keep it safe.`, "#157F3B");
   } catch (error) {
     say("list-status", "Could not remove: " + error.message, "#B42318");
   }

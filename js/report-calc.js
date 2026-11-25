@@ -61,18 +61,15 @@ export function subjectRow(studentId, list, settings) {
   const marks = parts.map((p) => (p.pct === null ? null : Math.round((p.pct / 100) * p.weight)));
   const [classScore, hwScore, examScore] = marks;
 
-  // Total out of 100. If something isn't recorded yet, scale up what we have (marked *).
+  // Total out of 100 = exactly the marks shown added up (class score + homework + exam).
+  // Anything not recorded counts as 0, so the total always matches what is printed.
   const have = parts.filter((p) => p.pct !== null && p.weight > 0);
-  let total = null, provisional = false;
-  if (have.length) {
-    const got = have.reduce((n, p) => n + (p.pct / 100) * p.weight, 0);
-    const possible = have.reduce((n, p) => n + p.weight, 0);
-    total = Math.round((got / possible) * 100);
-    provisional = possible < w.exam + w.classwork + w.homework;
-    // When everything is recorded, the total is exactly the printed marks added up
-    if (!provisional) total = marks.reduce((n, m, i) => n + (parts[i].weight > 0 ? m : 0), 0);
-  }
-  return { classScore, hwScore, exam, examScore, total, provisional };
+  let total = null;
+  if (have.length) total = marks.reduce((n, m, i) => n + (parts[i].weight > 0 && m !== null ? m : 0), 0);
+  // Which parts are missing (e.g. the student didn't write the exam)
+  const missing = [["exam", exam], ["class score", classScore], ["homework", hwScore]]
+    .filter(([, v]) => v === null).map(([name]) => name);
+  return { classScore, hwScore, exam, examScore, total, missing };
 }
 
 // Everything for one class: each student's report, positions and the class order
@@ -180,7 +177,7 @@ export function reportCardHtml(r, settings, schoolName = "") {
         </div>
       </div>
       <div style="display: flex; flex-direction: column; gap: 4px; text-align: right">
-        <span style="font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: #8A5A00; font-weight: 700">Terminal report</span>
+        <span style="font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: #8A5A00; font-weight: 700">${r.rows.length && r.rows.every((row) => row.exam !== null) ? "Terminal report" : "Report so far"}</span>
         <span style="font-size: 14px">${settings.term}</span>
       </div>
     </div>
@@ -204,7 +201,7 @@ export function reportCardHtml(r, settings, schoolName = "") {
         <tbody>${tableRows}</tbody>
       </table>
     </div>`}
-    <p style="margin: 0; font-size: 12px; color: #5B6472">Grades: ${gradeScaleText(settings)}</p>
+    <p style="margin: 0; font-size: 12px; color: #5B6472">Grades: ${gradeScaleText(settings)}${r.rows.length && r.rows.every((row) => row.exam !== null) ? "" : " · This report fills up during the term and is final after the exams."}</p>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px">
       <div style="display: flex; flex-direction: column; gap: 6px; padding: 14px; border: 1px solid #E2E7EF; border-radius: 8px">

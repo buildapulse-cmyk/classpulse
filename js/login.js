@@ -1,7 +1,7 @@
 // js/login.js
 // The welcome page: choose Teacher, Headmaster or Parent, then log in.
 
-import { logIn, whoAmI, HOME, parentLogin, parentPassword, resetPassword, friendlyError } from "./auth.js";
+import { logIn, whoAmI, HOME, currentParentLogin, parentPassword, resetPassword, friendlyError } from "./auth.js";
 
 const roleButtons = document.querySelectorAll(".role");
 const form = document.getElementById("login-form");
@@ -74,7 +74,7 @@ form.addEventListener("submit", async (e) => {
   goBtn.disabled = true;
   say("Logging in…");
   try {
-    const login = role === "parent" ? parentLogin(id) : id;
+    const login = role === "parent" ? await currentParentLogin(id) : id;
     await logIn(role, login, role === "parent" ? parentPassword(pass) : pass);
     say("Welcome! Opening your page…", "#157F3B");
     location.href = HOME[role];

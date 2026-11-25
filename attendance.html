@@ -6,6 +6,7 @@
 <meta name="description" content="ClassPulse helps teachers record attendance and scores and follow each student's progress over the term.">
 <title>ClassPulse — take attendance</title>
 <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/mobile.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
 <style>
@@ -49,8 +50,9 @@ a{color:#1E5AA8}a:hover{color:#12305A}
 <section id="student-list" aria-live="polite" style="background: #FFFFFF; border: 1px solid #E2E7EF; border-radius: 16px; padding: 8px 24px">
 <p style="color: #5B6472">Loading students…</p>
 </section>
-<div style="display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 16px">
+<div class="sticky-save" style="display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 16px">
 <p id="save-status" role="status" style="margin: 0; align-self: center; font-weight: 600"></p>
+<button type="button" id="delete-btn" hidden style="height: 48px; padding: 0 18px; border-radius: 10px; background: #FFFFFF; border: 1px solid #F1B8B3; color: #8F1D15; font-weight: 600; font-size: 14px; font-family: inherit; cursor: pointer">Delete this register</button>
 <button type="button" id="save-btn" style="height: 48px; padding: 0 24px; border-radius: 10px; background: #F2A300; color: #12305A; font-weight: 700; font-size: 15px; text-decoration: none; display: flex; align-items: center; border: none; font-family: inherit; cursor: pointer">Save attendance</button>
 </div>
 </main>

@@ -6,13 +6,15 @@ import { db } from "./firebase.js";
 import { getDocs, getDoc, setDoc, updateDoc, query, where, collection, doc, writeBatch, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 import { useSchool, schoolCol, schoolDoc, SCHOOL } from "./school.js";
-import { createLogin, resetPassword, friendlyError, parentLogin, parentPassword } from "./auth.js";
+import { createLogin, resetPassword, friendlyError, parentLogin, parentUsername, parentPassword } from "./auth.js";
 import { LEVELS, SUBJECTS, levelOf, classOrder } from "./levels.js";
 import { average, bandOf, BANDS, resultsFor } from "./results.js";
 import { exportButton } from "./export.js";
 import { monthlyScores, monthlyAttendance, monthBars, miniBars } from "./charts.js";
 import { withTargetDefaults, currentPeriods, classProgress, ring, isoDate } from "./progress.js";
 import { hashPin, newPin } from "./pins.js";
+import { refreshParentViews, lastParentRefresh, needsRefresh } from "./parent-views.js";
+import { drawYear, withYearDefaults, termIsEnding } from "./school-year.js";
 
 await useSchool("headmaster");
 const $ = (id) => document.getElementById(id);
@@ -30,9 +32,11 @@ let newChildren = []; // children picked for the parent being added
 let targets = withTargetDefaults();
 let pins = {};
 let profile = { schoolName: "", motto: "", term: "", badge: null };
+let latest = null;
+let year = withYearDefaults(); // the term's records, kept for refreshing parents' views
 
 // ---------- Tabs ----------
-const tabs = ["overview", "teachers", "parents", "pins", "targets", "profile"];
+const tabs = ["overview", "teachers", "parents", "pins", "targets", "profile", "year"];
 function showTab(name) {
   tabs.forEach((t) => {
     $(`tab-${t}`).setAttribute("aria-selected", t === name);
@@ -49,22 +53,25 @@ exportButton($("head-export"), $("export-status"));
 // ---------- Load ----------
 async function loadAll() {
   const periods = currentPeriods();
-  const [classSnap, teacherSnap, targetDoc, pinDoc, reportDoc, parentSnap] = await Promise.all([
+  const [classSnap, teacherSnap, targetDoc, pinDoc, reportDoc, parentSnap, yearDoc] = await Promise.all([
     getDocs(schoolCol("classes")),
     getDocs(query(collection(db, "users"), where("schoolId", "==", SCHOOL.id), where("role", "==", "teacher"))),
     getDoc(schoolDoc("settings", "targets")),
     getDoc(schoolDoc("private", "pins")),
     getDoc(schoolDoc("settings", "report")),
-    getDocs(query(collection(db, "users"), where("schoolId", "==", SCHOOL.id), where("role", "==", "parent")))
+    getDocs(query(collection(db, "users"), where("schoolId", "==", SCHOOL.id), where("role", "==", "parent"))),
+    getDoc(schoolDoc("settings", "year"))
   ]);
-  parents = parentSnap.docs.map((d) => ({ uid: d.id, ...d.data() })).sort((a, b) => a.name.localeCompare(b.name));
+  // (an old login replaced by a PIN reset is hidden)
+  parents = parentSnap.docs.map((d) => ({ uid: d.id, ...d.data() })).filter((p) => !p.replacedBy).sort((a, b) => a.name.localeCompare(b.name));
   const report = reportDoc.exists() ? reportDoc.data() : {};
-  profile = { schoolName: report.schoolName || "", motto: report.motto || "", term: report.term || "", badge: report.badge || null, parentsCanSee: !!report.parentsCanSee };
+  profile = { schoolName: report.schoolName || "", motto: report.motto || "", term: report.term || "", badge: report.badge || null };
   drawProfile();
   classes = classSnap.docs.map((d) => ({ id: d.id, ...d.data() })).sort(classOrder);
   teachers = teacherSnap.docs.map((d) => ({ uid: d.id, ...d.data() })).sort((a, b) => a.name.localeCompare(b.name));
   targets = withTargetDefaults(targetDoc.exists() ? targetDoc.data() : {});
   pins = pinDoc.exists() ? pinDoc.data() : {};
+  year = withYearDefaults(yearDoc.exists() ? yearDoc.data() : {}, targets);
 
   // Scores, topics and attendance needed for the overview (this term, or the last 3 months)
   const since = targets.termStart || isoDate(new Date(Date.now() - 90 * 86400000));
@@ -82,15 +89,22 @@ async function loadAll() {
   const todayRegisters = registers30.filter((a) => a.date === isoDate(new Date()));
 
   const termScores = assessments.filter((a) => a.date >= since);
+  latest = { scores: termScores, registers: termRegisters.filter((a) => a.date >= since), report };
   drawOverview(termScores, assessments, topics, todayRegisters, periods, registers30);
   $("chart-scores").innerHTML = monthBars(monthlyScores(termScores), { title: "School average score by month" });
   $("chart-attendance").innerHTML = monthBars(monthlyAttendance(termRegisters.filter((a) => a.date >= since)), { kind: "attendance", title: "School attendance by month" });
+
+  // Keep every child's private parent summary fresh (at most every 12 hours, or on request)
+  const last = await lastParentRefresh(SCHOOL.id);
+  showViewsStatus(last);
+  if (needsRefresh(last)) updateParentViews();
   fillClassPickers();
   drawTeachers();
   fillParentPickers();
   drawParents();
   drawPins();
   drawTargets();
+  drawYear({ classes, parents, targets, year, reload: loadAll });
 }
 
 // ---------- Overview ----------
@@ -157,6 +171,8 @@ function drawAttendanceBox(todayRegisters, present, counted, takenPct) {
 function drawNeeds(termScores, recentScores, topics, registers30, periods) {
   const items = [];
   const list = (arr) => arr.map((c) => `<strong>${c}</strong>`).join(", ");
+
+  if (termIsEnding(targets)) items.push(["gold", `The term's final exams have started. When report cards are done, <a href="#" data-go-link="year">download the term's records and end the term</a>${year.term >= 3 ? " (promotion and new academic year)" : ""}.`]);
 
   const noTeacher = classes.filter((c) => !c.classTeacherUid).map((c) => c.className);
   if (noTeacher.length) items.push(["red", `${noTeacher.length} class${noTeacher.length === 1 ? " has" : "es have"} no class teacher: ${list(noTeacher)}. <a href="#" data-go-link="teachers">Assign teachers</a>`]);
@@ -497,7 +513,7 @@ $("parent-form").addEventListener("submit", async (e) => {
   try {
     const uid = await createLogin(parentLogin(username), parentPassword(pin));
     await setDoc(doc(db, "users", uid), {
-      role: "parent", name, username, schoolId: SCHOOL.id, children: newChildren, active: true, createdAt: serverTimestamp()
+      role: "parent", name, username, schoolId: SCHOOL.id, children: newChildren, childIds: newChildren.map((k) => k.id), active: true, createdAt: serverTimestamp()
     });
     await setDoc(schoolDoc("private", "pins"), { [`parent-${uid}`]: pin }, { merge: true });
     $("pa-new").hidden = false;
@@ -531,8 +547,25 @@ function drawParents() {
         <span style="font-size: 13px; color: #5B6472">Username <strong>${p.username}</strong>${pins[`parent-${p.uid}`] ? ` · PIN <strong style="letter-spacing: 2px">${pins[`parent-${p.uid}`]}</strong>` : ""}</span>
         <span style="font-size: 13px">${(p.children || []).map((k) => `${k.name} (${k.className})`).join(", ")}</span>
       </div>
-      <button type="button" class="btn btn-line" data-ptoggle="${p.uid}">${p.active === false ? "Switch on" : "Switch off"}</button>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px">
+        <button type="button" class="btn btn-line" data-preset="${p.uid}" aria-expanded="false" aria-controls="reset-${p.uid}">Reset PIN</button>
+        <button type="button" class="btn btn-line" data-ptoggle="${p.uid}">${p.active === false ? "Switch on" : "Switch off"}</button>
+      </div>
+      <div id="reset-${p.uid}" hidden style="flex: 1 1 100%; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; padding: 12px; border-radius: 10px; background: #FFF4D6">
+        <div class="field" style="flex: 0 1 180px"><label for="newpin-${p.uid}">New PIN for ${p.name}</label><input id="newpin-${p.uid}" type="text" inputmode="numeric" maxlength="6" placeholder="4–6 digits"></div>
+        <button type="button" class="btn btn-line" data-pmake="${p.uid}">Make one</button>
+        <button type="button" class="btn btn-navy" style="height: 40px; font-size: 13px" data-psave="${p.uid}">Save new PIN</button>
+        <span style="flex: 1 1 100%; font-size: 13px; color: #6B4E00">The old PIN stops working straight away. The username stays the same.</span>
+      </div>
     </div>`).join("");
+  document.querySelectorAll("[data-preset]").forEach((b) => b.addEventListener("click", () => {
+    const box = $(`reset-${b.dataset.preset}`);
+    box.hidden = !box.hidden;
+    b.setAttribute("aria-expanded", String(!box.hidden));
+    if (!box.hidden) $(`newpin-${b.dataset.preset}`).focus();
+  }));
+  document.querySelectorAll("[data-pmake]").forEach((b) => b.addEventListener("click", () => ($(`newpin-${b.dataset.pmake}`).value = newPin())));
+  document.querySelectorAll("[data-psave]").forEach((b) => b.addEventListener("click", () => resetParentPin(b.dataset.psave, b)));
   document.querySelectorAll("[data-ptoggle]").forEach((b) => b.addEventListener("click", async () => {
     const p = parents.find((x) => x.uid === b.dataset.ptoggle);
     const off = p.active !== false;
@@ -543,6 +576,62 @@ function drawParents() {
     } catch (error) { say("pl-status", "Could not change: " + error.message, "#B42318"); }
   }));
 }
+
+// A parent forgot their PIN: only the headmaster (or the admin) can give a new one.
+// Firebase can't change another person's password from a website on the free plan, so the parent
+// gets a fresh login behind the scenes (same username, new PIN) and the old one is switched off.
+async function resetParentPin(uid, button) {
+  const p = parents.find((x) => x.uid === uid);
+  const pin = $(`newpin-${uid}`).value.trim();
+  if (!/^\d{4,6}$/.test(pin)) return say("pl-status", "The new PIN must be 4 to 6 digits (or click Make one).", "#B42318");
+  if (!confirm(`Give ${p.name} the new PIN ${pin}?\n\nTheir old PIN will stop working.`)) return;
+  button.disabled = true;
+  say("pl-status", `Making ${p.name}'s new login…`, "#12305A");
+  try {
+    const username = parentUsername(p.username);
+    let version = (p.loginVersion || 0) + 1, newUid = null;
+    while (!newUid) {
+      try {
+        newUid = await createLogin(parentLogin(username, version), parentPassword(pin));
+      } catch (error) {
+        if (error.code !== "auth/email-already-in-use" || version > (p.loginVersion || 0) + 5) throw error;
+        version++; // a login with this number was left over from an earlier try
+      }
+    }
+    const { uid: _old, ...profile } = p;
+    await setDoc(doc(db, "users", newUid), { ...profile, loginVersion: version, active: true, replaces: uid, createdAt: serverTimestamp() });
+    await setDoc(doc(db, "parentLogins", username), { version, schoolId: SCHOOL.id, updatedAt: serverTimestamp() });
+    await updateDoc(doc(db, "users", uid), { active: false, replacedBy: newUid });
+    await setDoc(schoolDoc("private", "pins"), { [`parent-${newUid}`]: pin, [`parent-${uid}`]: null }, { merge: true });
+    say("pl-status", `New PIN for ${p.name}: ${pin} ✓ Username stays ${username}.`, "#157F3B");
+    await loadAll();
+  } catch (error) {
+    say("pl-status", "Could not reset the PIN: " + friendlyError(error), "#B42318");
+    button.disabled = false;
+  }
+}
+
+// ---------- Parents' view (each child's private summary) ----------
+function showViewsStatus(lastIso) {
+  $("views-status").textContent = lastIso
+    ? `Parents' view last updated ${new Date(lastIso).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}. It updates by itself at least twice a day when you open this portal.`
+    : "Parents' view hasn't been made yet.";
+}
+async function updateParentViews() {
+  if (!latest) return;
+  $("views-refresh").disabled = true;
+  $("views-status").textContent = "Updating parents' view…";
+  try {
+    const n = await refreshParentViews(SCHOOL.id, classes, latest.scores, latest.registers, latest.report);
+    showViewsStatus(new Date().toISOString());
+    $("views-status").textContent += ` (${n} children)`;
+  } catch (error) {
+    $("views-status").textContent = "Could not update parents' view: " + error.message;
+  } finally {
+    $("views-refresh").disabled = false;
+  }
+}
+$("views-refresh").addEventListener("click", updateParentViews);
 
 // ---------- Class PINs ----------
 function drawPins() {
@@ -623,7 +712,6 @@ function drawProfile() {
   $("p-name").value = profile.schoolName || SCHOOL.name || "";
   $("p-motto").value = profile.motto || "";
   $("p-term").value = profile.term || "";
-  $("p-parents-see").checked = !!profile.parentsCanSee;
   $("school-name").textContent = profile.schoolName || SCHOOL.name || "Your school";
   $("school-motto").textContent = profile.motto || "";
   showCrest();
@@ -670,12 +758,12 @@ $("profile-save").addEventListener("click", async () => {
   profile.schoolName = $("p-name").value.trim();
   profile.motto = $("p-motto").value.trim();
   profile.term = $("p-term").value.trim();
-  profile.parentsCanSee = $("p-parents-see").checked;
   if (!profile.schoolName) return say("profile-status", "Please type the school name.", "#B42318");
   try {
     await setDoc(schoolDoc("settings", "report"), { ...profile, updatedAt: serverTimestamp() }, { merge: true });
     drawProfile();
     say("profile-status", "School profile saved ✓ Report cards now use it.", "#157F3B");
+    if (latest) { latest.report = { ...latest.report, ...profile }; updateParentViews(); }
   } catch (error) {
     say("profile-status", "Could not save: " + error.message, "#B42318");
   }

@@ -12,6 +12,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 import { LEVELS, levelOf, classOrder } from "./levels.js";
 import { isoDate } from "./progress.js";
+import { refreshParentViews } from "./parent-views.js";
 
 const me = await requireRole("admin");
 const $ = (id) => document.getElementById(id);
@@ -309,7 +310,7 @@ $("run-btn").addEventListener("click", async () => {
       const username = kids.length > 1 ? "practice.parent" : kids[0].name.toLowerCase().replace(/[^a-z]+/g, ".");
       const uid = await getOrCreateLogin(parentLogin(username), parentPassword(PRACTICE_PIN));
       const children = kids.map((k) => ({ id: k.id, name: k.name, className: k.className }));
-      userWrites.push([doc(db, "users", uid), { role: "parent", name, username, schoolId, children, active: true, sim: true, createdAt: serverTimestamp() }]);
+      userWrites.push([doc(db, "users", uid), { role: "parent", name, username, schoolId, children, childIds: children.map((k) => k.id), active: true, sim: true, createdAt: serverTimestamp() }]);
       pinsUpdate[`parent-${uid}`] = PRACTICE_PIN;
       shown.parents.push({ name, username, children: children.map((k) => `${k.name} (${k.className})`).join(", ") });
     }
@@ -324,6 +325,13 @@ $("run-btn").addEventListener("click", async () => {
     userWrites.push([sd("private", "practice"), { ...shown, pin: PRACTICE_PIN, password: PRACTICE_PASSWORD, createdAt: serverTimestamp() }]);
     await writeAll(userWrites, "logins");
     drawLogins(shown);
+
+    // 6. Every child's private parent summary
+    log("6. Making each child's private parent view…");
+    const reportNow = await getDoc(sd("settings", "report"));
+    const n = await refreshParentViews(schoolId, classList,
+      scoreWrites.map(([, data]) => data), regWrites.map(([, data]) => data), reportNow.exists() ? reportNow.data() : {});
+    log(`   ${n} children ✓`, "#157F3B");
 
     log("Done ✓ Practice data is ready. Open the school to look around:", "#157F3B");
     $("done-links").hidden = false;
@@ -344,6 +352,14 @@ $("clear-btn").addEventListener("click", async () => {
   $("run-btn").disabled = true; $("clear-btn").disabled = true;
   $("log").innerHTML = "";
   try {
+    // Practice children's parent views go too
+    const simStudents = await getDocs(query(collection(db, "schools", schoolId, "students"), where("sim", "==", true)));
+    for (let i = 0; i < simStudents.docs.length; i += 400) {
+      const b = writeBatch(db);
+      simStudents.docs.slice(i, i + 400).forEach((d) => b.delete(doc(db, "schools", schoolId, "childViews", d.id)));
+      await b.commit();
+    }
+    log(`parent views: ${simStudents.docs.length} removed`);
     for (const name of ["assessments", "attendance", "topics", "students"]) {
       const snap = await getDocs(query(collection(db, "schools", schoolId, name), where("sim", "==", true)));
       for (let i = 0; i < snap.docs.length; i += 400) {

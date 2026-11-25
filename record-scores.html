@@ -6,6 +6,7 @@
 <meta name="description" content="ClassPulse helps teachers record attendance and scores and follow each student's progress over the term.">
 <title>ClassPulse — record scores</title>
 <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/mobile.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
 <style>
@@ -60,8 +61,9 @@ a{color:#1E5AA8}a:hover{color:#12305A}
 <section style="flex: 999 1 560px; min-width: 0; background: #FFFFFF; border: 1px solid #E2E7EF; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 8px">
 <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px"><h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 20px">Scores · <span id="class-name">JHS 2A</span></h2><span style="font-size: 14px; color: #5B6472"><span class="type-name">Class exercise</span> · out of <span class="max-out">10</span></span></div>
 <div id="score-list" aria-live="polite"><p style="color: #5B6472">Loading students…</p></div>
-<div style="display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 16px; padding-top: 12px">
+<div class="sticky-save" style="display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 16px; padding-top: 12px">
 <p id="save-status" role="status" style="margin: 0; font-weight: 600"></p>
+<button type="button" id="cancel-edit" hidden style="height: 48px; padding: 0 18px; border-radius: 10px; background: #FFFFFF; border: 1px solid #C9D2DF; color: #12305A; font-weight: 600; font-size: 14px; font-family: inherit; cursor: pointer">Cancel fixing</button>
 <button type="button" id="save-btn" style="height: 48px; padding: 0 24px; border-radius: 10px; background: #F2A300; color: #12305A; font-weight: 700; font-size: 15px; text-decoration: none; display: flex; align-items: center; border: none; font-family: inherit; cursor: pointer">Save scores</button>
 </div>
 </section>
@@ -79,6 +81,12 @@ a{color:#1E5AA8}a:hover{color:#12305A}
 </div>
 </section>
 </div>
+<section aria-labelledby="recent-title" style="background: #FFFFFF; border: 1px solid #E2E7EF; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 8px">
+<h2 id="recent-title" style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 20px">Recently saved · <span class="class-subject"></span></h2>
+<p style="margin: 0; font-size: 14px; color: #5B6472">Made a mistake? Click <strong>Fix</strong> to change the scores, or <strong>Delete</strong> to remove the whole record.</p>
+<div id="recent-list" aria-live="polite"><p style="color: #5B6472">Loading…</p></div>
+<p id="recent-status" role="status" style="margin: 0; font-weight: 600"></p>
+</section>
 </main>
 </div>
 <script type="module" src="js/record-scores.js"></script>

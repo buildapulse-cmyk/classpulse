@@ -23,7 +23,19 @@ export const ROLE_NAMES = { admin: "Admin", headmaster: "Headmaster", teacher: "
 // Parents log in with a username + PIN from the school (no email needed).
 // Behind the scenes the username becomes a login like "ama.boateng@parent.classpulse.app".
 export const PARENT_DOMAIN = "parent.classpulse.app";
-export const parentLogin = (username) => `${username.trim().toLowerCase().replace(/\s+/g, ".")}@${PARENT_DOMAIN}`;
+export const parentUsername = (username) => username.trim().toLowerCase().replace(/\s+/g, ".");
+// After a PIN reset the parent gets a fresh login ("ama.boateng.v2@…"); version 0 is the first one.
+export const parentLogin = (username, version = 0) => `${parentUsername(username)}${version ? `.v${version}` : ""}@${PARENT_DOMAIN}`;
+
+// Which login a parent's username uses now (only the version number is stored; no PIN, no child)
+export async function currentParentLogin(username) {
+  try {
+    const snap = await getDoc(doc(db, "parentLogins", parentUsername(username)));
+    return parentLogin(username, snap.exists() ? snap.data().version || 0 : 0);
+  } catch (error) {
+    return parentLogin(username);
+  }
+}
 // Firebase passwords need 6+ characters, so a parent's short PIN (e.g. 12345) gets a fixed prefix
 export const parentPassword = (pin) => `cpp-${String(pin).trim()}`;
 

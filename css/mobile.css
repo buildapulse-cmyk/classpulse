@@ -1,0 +1,50 @@
+/* The ☰ button is hidden on computers */
+.menu-btn { display: none; }
+
+/* css/mobile.css
+   Phone-friendly layout for ClassPulse (screens up to 640px wide).
+   The pages use inline styles, so these phone rules use !important to take over. */
+
+@media (max-width: 640px) {
+  /* Compact top bar: logo and log out on one line, the menu as one row you can swipe */
+  header { padding: 0 12px !important; }
+  header > div { gap: 6px 10px !important; padding: 8px 0 !important; }
+  /* The menu folds into a ☰ button; tapping it opens the links as a list underneath */
+  .menu-btn { display: flex !important; order: 2; }
+  #user-box { order: 1; margin-left: auto; }
+  nav[aria-label="Main"] {
+    display: none !important; order: 3; flex: 1 1 100% !important;
+    flex-direction: column; flex-wrap: nowrap !important; gap: 2px !important;
+    padding: 6px 0 4px; border-top: 1px solid rgba(255, 255, 255, 0.15);
+  }
+  header.menu-open nav[aria-label="Main"] { display: flex !important; }
+  nav[aria-label="Main"] a { padding: 12px 10px !important; font-size: 16px !important; border-radius: 8px; box-shadow: none !important; }
+  nav[aria-label="Main"] a[aria-current="page"] { background: rgba(255, 255, 255, 0.14) !important; border-left: 4px solid #FFC23D; }
+  #user-box { gap: 8px !important; }
+  #user-box > span:first-of-type { display: none !important; } /* name and school text */
+
+  /* Tighter page */
+  main { padding: 16px 14px 110px !important; gap: 16px !important; }
+  h1 { font-size: 24px !important; }
+
+  /* Attendance: three wide buttons under each name */
+  [role="group"][aria-label^="Attendance for"] { flex: 1 1 100% !important; }
+  .att-btn { flex: 1; min-width: 0 !important; height: 48px !important; }
+
+  /* Save buttons stay at the bottom of the screen */
+  .sticky-save {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+    background: #FFFFFF; padding: 10px 14px calc(10px + env(safe-area-inset-bottom)) !important;
+    box-shadow: 0 -4px 14px rgba(18, 48, 90, 0.14); justify-content: stretch !important; gap: 8px !important;
+  }
+  .sticky-save button, .sticky-save a { flex: 1 1 100%; height: 50px !important; justify-content: center; }
+  .sticky-save p:empty { display: none; }
+  .sticky-save p { flex: 1 1 100%; text-align: center; }
+
+  /* Score entry: wider boxes, easy to tap */
+  .score-input { width: 110px !important; height: 48px !important; font-size: 18px !important; }
+
+  /* Cards and tiles fill the width */
+  .tile { flex: 1 1 140px !important; }
+  .cls { min-height: 0 !important; }
+}

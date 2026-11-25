@@ -6,6 +6,7 @@
 <meta name="description" content="ClassPulse helps teachers record attendance and scores and follow each student's progress over the term.">
 <title>ClassPulse — my students</title>
 <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/mobile.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
 <style>
@@ -74,7 +75,7 @@ dialog::backdrop{background:rgba(11,31,61,0.55)}
 <div style="overflow-x: auto"><table style="width: 100%; min-width: 480px; border-collapse: collapse; font-size: 14px"><thead><tr style="text-align: left; color: #5B6472; font-size: 13px"><th style="padding: 8px">Date</th><th style="padding: 8px">Type</th><th style="padding: 8px">Topic</th><th style="padding: 8px; text-align: right">Score</th></tr></thead><tbody id="dlg-rows"></tbody></table></div>
 </div>
 <div id="dlg-remove-box" hidden style="margin: 0 28px 28px; padding: 16px; border: 1px solid #F0B0AA; border-radius: 12px; background: #FEF4F3; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; font-family: Inter, system-ui, sans-serif">
-<span style="font-size: 14px; color: #8F1D15">Has this student left the school?</span>
+<span style="font-size: 14px; color: #8F1D15">Has this student left the school? Their full record downloads first, then all their information is removed.</span>
 <button type="button" id="dlg-remove" style="height: 44px; padding: 0 16px; border-radius: 10px; border: none; background: #B42318; color: #FFFFFF; font-weight: 700; font-family: inherit; cursor: pointer">Remove from school</button>
 <p id="dlg-remove-status" role="status" style="margin: 0; flex-basis: 100%; font-size: 14px; font-weight: 600"></p>
 </div>

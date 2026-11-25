@@ -1,13 +1,16 @@
 // js/parent.js
 // The parent's page: ONLY their own child (or children) — progress in each subject,
 // attendance, month-by-month progress, strengths, recent scores, and the report card
-// once the headmaster lets parents see it.
+// (it fills up during the term and is final after the exams). Parents can download
+// their child's full record to keep.
 
-import { getDocs, getDoc, query, where } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+import { getDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 import { useSchool, schoolCol, schoolDoc, SCHOOL } from "./school.js";
 import { BANDS, bandOf, average, shortDate, resultsFor, typeColors } from "./results.js";
 import { monthBars } from "./charts.js";
-import { withDefaults, buildClassReports, reportCardHtml } from "./report-calc.js";
+import { withDefaults, reportCardHtml } from "./report-calc.js";
+import { viewAsAssessments } from "./parent-views.js";
+import { downloadRecords, recordFromView } from "./child-record.js";
 
 await useSchool("parent");
 const $ = (id) => document.getElementById(id);
@@ -15,7 +18,7 @@ $("page").hidden = false;
 
 const children = SCHOOL.me.profile.children || [];
 let settings = withDefaults();
-const cache = {}; // className -> { classDoc, assessments, attendance }
+
 
 async function start() {
   const reportDoc = await getDoc(schoolDoc("settings", "report"));
@@ -38,22 +41,6 @@ async function start() {
   showChild(children[0]);
 }
 
-async function classData(className) {
-  if (!cache[className]) {
-    const [classSnap, assessSnap, attendSnap] = await Promise.all([
-      getDocs(query(schoolCol("classes"), where("className", "==", className))),
-      getDocs(query(schoolCol("assessments"), where("className", "==", className))),
-      getDocs(query(schoolCol("attendance"), where("className", "==", className)))
-    ]);
-    cache[className] = {
-      classDoc: classSnap.docs[0] ? classSnap.docs[0].data() : { className, students: [] },
-      assessments: assessSnap.docs.map((d) => d.data()),
-      attendance: attendSnap.docs.map((d) => d.data())
-    };
-  }
-  return cache[className];
-}
-
 // A kind message for parents, with ways to help at home
 function parentMessage(name, r) {
   const first = name.split(" ")[0];
@@ -74,16 +61,23 @@ function parentMessage(name, r) {
 
 async function showChild(child) {
   $("child").innerHTML = '<p style="color: #5B6472">Loading…</p>';
-  const data = await classData(child.className);
-  const r = resultsFor(child.id, data.assessments, true);
+  // Only this child's private summary is read — never anyone else's
+  const snap = await getDoc(schoolDoc("childViews", child.id));
+  if (!snap.exists()) {
+    $("child").innerHTML = `<div class="card"><p style="margin: 0">${child.name.split(" ")[0]}'s progress will appear here once the school updates it. Please check again later.</p></div>`;
+    return;
+  }
+  const view = snap.data();
+  const r = resultsFor(child.id, viewAsAssessments(view), true);
   const band = r.band ? BANDS[r.band] : null;
 
   // Attendance
-  const days = data.attendance.filter((a) => a.records[child.id] !== undefined).sort((a, b) => a.date.localeCompare(b.date));
-  const absentDays = days.filter((a) => a.records[child.id] === "A");
-  const lateDays = days.filter((a) => a.records[child.id] === "L");
+  const days = (view.attendance || []).slice().sort((a, b) => a.date.localeCompare(b.date));
+  const absentDays = days.filter((a) => a.mark === "A");
+  const lateDays = days.filter((a) => a.mark === "L");
   const present = days.length - absentDays.length;
   const attPct = days.length ? Math.round((present / days.length) * 100) : null;
+  const updated = view.updatedAt && view.updatedAt.toDate ? view.updatedAt.toDate() : null;
 
   // Each subject: average and latest
   const subjects = [...new Set(r.history.map((h) => h.subject))].sort().map((s) => {
@@ -99,13 +93,9 @@ async function showChild(child) {
   const tile = (label, value, note = "", color = "#12305A") => `<div class="tile"><span style="font-size: 13px; color: #5B6472">${label}</span><strong style="color: ${color}">${value}</strong><span style="font-size: 13px; color: #5B6472">${note}</span></div>`;
   const trend = r.history.length < 2 ? "—" : r.change >= 3 ? `▲ Up ${r.change}` : r.change <= -3 ? `▼ Down ${Math.abs(r.change)}` : "● Steady";
 
-  // Report card (only when the school allows it)
-  let reportHtml = `<p style="margin: 0; color: #5B6472">The report card will appear here when the school releases it.</p>`;
-  if (settings.parentsCanSee) {
-    const { reports } = buildClassReports(data.classDoc, data.assessments, data.attendance, settings);
-    const rep = reports.find((x) => x.student.id === child.id);
-    if (rep) reportHtml = `<div class="no-print" style="display: flex; justify-content: flex-end"><button type="button" onclick="window.print()" style="height: 44px; padding: 0 18px; border-radius: 10px; border: none; background: #F2A300; color: #12305A; font-weight: 700; font-family: inherit; cursor: pointer">Print report card</button></div>${reportCardHtml(rep, settings, SCHOOL.name)}`;
-  }
+  // Report card: fills up during the term, final after the exams
+  const record = recordFromView(view);
+  const reportHtml = `<div class="no-print" style="display: flex; justify-content: flex-end"><button type="button" onclick="window.print()" class="pbtn gold">Print report card</button></div>${reportCardHtml(record.report, settings, SCHOOL.name)}`;
 
   $("child").innerHTML = `
   <div class="no-print" style="display: flex; flex-direction: column; gap: 20px">
@@ -113,6 +103,13 @@ async function showChild(child) {
       <h2 style="font-size: 28px">${child.name}</h2>
       <span style="padding: 4px 12px; border-radius: 999px; background: #EEF1F6; font-weight: 700; font-size: 14px">${child.className}</span>
       ${band ? `<span style="padding: 4px 12px; border-radius: 999px; background: ${band.soft}; color: ${band.color}; font-weight: 700; font-size: 14px">${band.label}</span>` : ""}
+      ${updated ? `<span style="font-size: 13px; color: #5B6472">Updated ${updated.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>` : ""}
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 10px">
+      <button type="button" id="see-report" class="pbtn gold" aria-expanded="false" aria-controls="report-box">See report card</button>
+      <button type="button" id="dl-record" class="pbtn line">Download ${child.name.split(" ")[0]}'s record</button>
+      <span style="flex-basis: 100%; font-size: 13px; color: #5B6472">At the end of every term, please download the record and keep it — it has the report card and every assessment.</span>
     </div>
 
     <div style="display: flex; flex-wrap: wrap; gap: 14px">
@@ -171,9 +168,22 @@ async function showChild(child) {
       </table></div>
     </section>
 
-    <h3 style="font-size: 20px">Report card</h3>
   </div>
-  ${reportHtml}`;
+  <div id="report-box" hidden style="display: flex; flex-direction: column; gap: 12px">
+    <h3 class="no-print" style="font-size: 20px">Report card</h3>
+    ${reportHtml}
+  </div>`;
+
+  $("see-report").addEventListener("click", () => {
+    const box = $("report-box");
+    box.hidden = !box.hidden;
+    $("see-report").setAttribute("aria-expanded", String(!box.hidden));
+    $("see-report").textContent = box.hidden ? "See report card" : "Hide report card";
+    if (!box.hidden) box.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+  $("dl-record").addEventListener("click", () => {
+    downloadRecords([record], settings, `${child.name} - ${child.className} - ${settings.term} - ClassPulse record`);
+  });
 }
 
 start().catch((error) => { $("child").innerHTML = `<p style="color: #B42318; font-weight: 600">Could not load: ${error.message}</p>`; });
